@@ -1,0 +1,17 @@
+# Plotting Libaries
+kaleido==0.1.0.post1 # This version is needed to save .pdf files from plotly figures on windows
+plotly
+matplotlib
+seaborn
+
+# Basics
+numpy
+pandas
+scipy
+
+# For better workflow with Git and jupyter nbs
+nbstripout
+nbdime
+
+# Advanced fitting library
+iminuit
