@@ -10,7 +10,7 @@ ge = 28.02495;
 gmu = -0.1355;
 
 % coupling
-J = 4.4956;
+A_iso = 4.4956;
 
 % magnetic field / T
 B0 = 0.0822;
@@ -24,12 +24,12 @@ nu_mid = (nu_electron + nu_muon)/2.0;
 nu_diff = (nu_electron - nu_muon)/2.0;
 
 
-alpha = 0.5*atan2(J,nu_electron-nu_muon);
-S =  sqrt((nu_diff)^2.0 + (J/2)^2.0);
-w12 = nu_mid + J/2 - S;
-w13 = nu_mid + J/2 + S;
-w24 = nu_mid - J/2 + S;
-w34 = nu_mid - J/2 - S;
+alpha = 0.5*atan2(A_iso,nu_electron-nu_muon);
+S =  sqrt((nu_diff)^2.0 + (A_iso/2)^2.0);
+w12 = nu_mid + A_iso/2 - S;
+w13 = nu_mid + A_iso/2 + S;
+w24 = nu_mid - A_iso/2 + S;
+w34 = nu_mid - A_iso/2 - S;
 
 i12 = (1-sin(2*alpha))/4;
 i13 = (1+sin(2*alpha))/4;
@@ -37,10 +37,10 @@ i24 = (1+sin(2*alpha))/4;
 i34 = (1-sin(2*alpha))/4;
 
 
-E1 = nu_mid + J/2;
-E2 = -J/2 + S;
-E3 = -J/2 - S;
-E4 = -nu_mid + J/2;
+E1 = nu_mid + A_iso/2;
+E2 = -A_iso/2 + S;
+E3 = -A_iso/2 - S;
+E4 = -nu_mid + A_iso/2;
 
 
 % microwave frequency % Q?: change this?
@@ -64,7 +64,7 @@ d24 = sop([1/2 1/2],'zb');
 SxIy = sop([1/2 1/2],'xy');
 SyIx = sop([1/2 1/2],'yx');
 
-zq = 2*SxIy - 2*SyIx; % Q?: why?
+zq = 2*SxIy - 2*SyIx;
 
 unitary = expm(-1i*alpha * zq);
 unitary_t = expm(1i*alpha * zq);
@@ -92,11 +92,11 @@ exc_op = exc_op/2; % now nu1 has units of mT in the laboratory frame (there is a
 system.sqn=[0.5 0.5];       % spin quantum numbers
 system.interactions={1,0, 'z','e', nu_electron;           % Zeeman term of electron in simulation frame
                      2,0, 'z','e', nu_muon;           % Zeeman of muon
-                     1,2, 'x','x', J;                % isotropic HF
-                     1,2, 'y','y', J;                % isotropic HF
-                     1,2, 'z','z', J};                % isotropic HF
+                     1,2, 'x','x', A_iso;                % isotropic HF
+                     1,2, 'y','y', A_iso;                % isotropic HF
+                     1,2, 'z','z', A_iso};                % isotropic HF
                      
-system.init_state='ez'; % LF mode (e- in Sz eigenstate)
+system.init_state='ez'; % LF mode (muon in Iz eigenstate)
 system.eq = 'init';  % equilibrium state is the same as initial state
 
 % the options
@@ -197,6 +197,8 @@ for k=1:length(B0)
     end
     
 end
+
+%%
 
 %%
 figure(1); clf; hold on
