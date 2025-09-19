@@ -87,12 +87,12 @@ plt.plot(B_vec, i24, label = '24')
 plt.plot(B_vec, i34, label = '34')
 plt.legend(loc=0)
 
-plt.show()
+# plt.show()
 
 #%% give it a try with qutip
 
 import qutip as qt
-import jacobi_math
+from jacobi_math import jacobi_diagonalize
 
 B_vec = np.linspace(0.04,0.09,200)
 # B_vec = np.array([0.0610])
@@ -193,7 +193,7 @@ for ii_B, B0 in enumerate(B_vec):
     
     H0 = np.real(H0_qt.full())
     
-    psi, E_mat, psi_t = jacobi_math.jacobi_diagonalize(H0)
+    psi, E_mat, psi_t = jacobi_diagonalize(H0)
     
     E = np.diag(E_mat)
     

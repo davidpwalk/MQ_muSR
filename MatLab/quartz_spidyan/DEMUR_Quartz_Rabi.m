@@ -4,7 +4,7 @@ clear sequence
 
 
 
-% Zeeman
+% Zeeman (gamma / GHz/T or MHz/mT)
 ge = 28.02495;
 % ge = 28.02495*0.98;
 gmu = -0.1355;
@@ -12,8 +12,7 @@ gmu = -0.1355;
 % coupling
 J = 4.4956;
 
-% magnetic field
-
+% magnetic field / T
 B0 = 0.0822;
 
 nu_muon = gmu*B0;
@@ -44,14 +43,15 @@ E3 = -J/2 - S;
 E4 = -nu_mid + J/2;
 
 
-% microwave frequency
+% microwave frequency % Q?: change this?
 nu_uw = abs(w34);
 
 % vectorize (for fieldsweeps)
+
 B_vec = [B0];
 
 
-% add custom detection operators
+% add custom detection operators (x, y, z: component; a, b which spin)
 d34 = sop([1/2 1/2],'bz');
 d12 = sop([1/2 1/2],'az');
 d13 = sop([1/2 1/2],'za');
@@ -60,15 +60,16 @@ d24 = sop([1/2 1/2],'zb');
 
 % the zero quantum coherence, both as detection operator and for
 % transformations
+% I is the muon, S the e-
 SxIy = sop([1/2 1/2],'xy');
 SyIx = sop([1/2 1/2],'yx');
 
-zq = 2*SxIy - 2*SyIx;
+zq = 2*SxIy - 2*SyIx; % Q?: why?
 
 unitary = expm(-1i*alpha * zq);
 unitary_t = expm(1i*alpha * zq);
 
-Iz = sop([1/2 1/2],'ez');
+Iz = sop([1/2 1/2],'ez'); % e for identiy, basically 1 tensordot I_z (expanding base)
 Sz = sop([1/2 1/2],'ze');
 
 
@@ -95,7 +96,7 @@ system.interactions={1,0, 'z','e', nu_electron;           % Zeeman term of elect
                      1,2, 'y','y', J;                % isotropic HF
                      1,2, 'z','z', J};                % isotropic HF
                      
-system.init_state='ez'; % LF mode
+system.init_state='ez'; % LF mode (e- in Sz eigenstate)
 system.eq = 'init';  % equilibrium state is the same as initial state
 
 % the options
@@ -112,6 +113,7 @@ options.awg.s_rate = 500;  % can be switched on to improve accuracy
 % the sequence
 sequence.tp=[0, 500] ;     % vector with event lengths in ns
 sequence.nu1=[0,0.95];         % amplitude, here in mT, linearly polarized
+% sequence.nu1=[0,0.000001];         % amplitude, here in mT, linearly polarized
 % sequence.nu1=0;         % amplitude
 sequence.frq=nu_uw;  % frequency of pulse
 sequence.t_rise=0;           % rise time of chirp pulses
@@ -213,10 +215,10 @@ for ii=1:length(signalc)
 end
 xlabel('time [ns]')
 ylabel('<I_{i}>')
-% legend('<I_{z}>','<S_{z}>')
+legend('<I_{z}>','<S_{z}>')
 
 
-%% plot the filtered Iz operator (MuSR observable) plus the transition selective populations
+%% plot the filtered Iz operator (MuSR observable) plus the transition selective populations %Q?: filtered Iz operator?
 
 % select dataset
 trc_idx = find(B_vec == B0);
@@ -232,6 +234,8 @@ figure(99); clf; hold on;
 plot(t, LF_AC + LF_DC)
 Iz_idx = 1;
 plot(t,real(signalc{trc_idx}(Iz_idx,:)))
+
+% plot(t,real(signalc{trc_idx}(6,:)))
 
 % matches!
 

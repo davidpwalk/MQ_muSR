@@ -16,5 +16,4 @@ nbdime
 # Advanced fitting library
 iminuit
 
-jacobi_math
 qutip
