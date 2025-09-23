@@ -11,8 +11,11 @@ A_iso = 0.5148;
 D_parallel = 0.002;
 D_perpen = -D_parallel/2;
 
-thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
-phis = deg2rad([0, 30, 45, 60, 90]);
+% thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
+% phis = deg2rad([0, 30, 45, 60, 90]);
+
+thetas = deg2rad([5, 45]);
+phis = deg2rad([45]);
 
 % Range of B0
 magnetic_fields = linspace(0, 6, 200);
@@ -111,60 +114,59 @@ options.relaxation=0;       % tells SPIDYAN whether to include relaxation (1) or
 options.down_conversion=0;  % downconversion of signal (1) or not (0)
 options.det_op={'ez', 'ex'};
 options.labframe = 1;     % lab frame simulation is on
-options.awg.s_rate = 1000;  % can be switched on to improve accuracy (gives sampling rate of simulation in GHz)
+options.awg.s_rate = 500;  % can be switched on to improve accuracy (gives sampling rate of simulation in GHz)
 
 sequence.tp=500.0;     % vector with event lengths in ns
 sequence.detection=ones(1,length(sequence.tp)); % detection always on
 
-% Create cells for storing results
+% Preallocate: one cell per orientation. Each cell holds a matrix: (#det_ops) x Nfields
 Nfields = numel(magnetic_fields);
 Norient = numel(T_labs);
-Ntotal  = Nfields * Norient;
 
-signals=cell(1,Ntotal);
-allsignals=cell(1,Ntotal);
-eigenvalues  = cell(1,Ntotal);
-hamiltonians = cell(1,Ntotal);
+signals = cell(1, Norient);
+allsignals = cell(1, Norient);     % only if you need full detected_signal per field
+eigenvalues = cell(1, Norient);
 
-parfor idx=1:Ntotal
-    n = mod(idx-1, Nfields) + 1;   % field index
-    k = floor((idx-1)/Nfields) + 1; % orientation index
-
-    temp_nu_muon = gmu*magnetic_fields(n);
-    temp_nu_electron = ge*magnetic_fields(n);
-
-    temp_system = system;
-    
-    temp_system.interactions={1,0, 'z','e', temp_nu_electron;       % Zeeman term of electron in simulation frame
-                     2,0, 'z','e', temp_nu_muon;           % Zeeman of muon
-                     1,2, 'x','x', A_iso;             % isotropic HF
-                     1,2, 'y','y', A_iso;             % isotropic HF
-                     1,2, 'z','z', A_iso};             % isotropic HF
-
-    [temp_experiment, temp_options] = triple(sequence, options); % builds experiment (pulses)
-
-    [temp_system, temp_state, temp_options]=setup(temp_system, temp_options); % build system
+parfor k = 1:Norient
+    temp_signal = zeros(length(options.det_op), Nfields);
+    temp_eigenvalues = zeros(4, Nfields);
 
     T_lab = T_labs{k};
 
-    % Dipolar Hamiltonian in lab frame
-    H_dip = T_lab(1,1)*Sx*Ix + T_lab(1,2)*Sx*Iy + T_lab(1,3)*Sx*Iz + ...
-       T_lab(2,1)*Sy*Ix + T_lab(2,2)*Sy*Iy + T_lab(2,3)*Sy*Iz + ...
-       T_lab(3,1)*Sz*Ix + T_lab(3,2)*Sz*Iy + T_lab(3,3)*Sz*Iz;
+    for n = 1:Nfields
+        temp_nu_muon = gmu * magnetic_fields(n);
+        temp_nu_electron = ge * magnetic_fields(n);
 
-    temp_system.ham = temp_system.ham + H_dip
+        temp_system = system;  % copy
+        temp_system.interactions = { ...
+            1,0,'z','e', temp_nu_electron; ...
+            2,0,'z','e', temp_nu_muon; ...
+            1,2,'x','x', A_iso; ...
+            1,2,'y','y', A_iso; ...
+            1,2,'z','z', A_iso ...
+        };
 
-    hamiltonians{idx} = temp_system.ham
-    eigenvalues{idx} = eig(temp_system.ham)
+        [temp_experiment, temp_options] = triple(sequence, options);
+        [temp_system, temp_state, temp_options] = setup(temp_system, temp_options);
 
-    % disp(eigenvalues{n})
-    
-    [temp_state, detected_signal, temp_experiment] = homerun(temp_state, temp_system, temp_experiment, temp_options, []);  % propagate for each magnetic field
+        % Dipolar Hamiltonian in lab frame
+        H_dip = T_lab(1,1)*Sx*Ix + T_lab(1,2)*Sx*Iy + T_lab(1,3)*Sx*Iz + ...
+                T_lab(2,1)*Sy*Ix + T_lab(2,2)*Sy*Iy + T_lab(2,3)*Sy*Iz + ...
+                T_lab(3,1)*Sz*Ix + T_lab(3,2)*Sz*Iy + T_lab(3,3)*Sz*Iz;
 
-    signals{idx} = detected_signal.sf;    % keep signal from simulation frame
+        temp_system.ham = temp_system.ham + H_dip;
 
-    allsignals{idx} = detected_signal;
+        e = eig(temp_system.ham);
+        temp_eigenvalues(:, n) = real(e);
+
+        [temp_state, detected_signal, ~] = homerun(temp_state, temp_system, temp_experiment, temp_options, []);
+        temp_signal(:, n) = detected_signal.sf;
+        allsignals{k}{n} = detected_signal;
+    end
+    signals{k} = temp_signal;
+    eigenvalues{k} = temp_eigenvalues;
 end
+
 
 toc;
 
