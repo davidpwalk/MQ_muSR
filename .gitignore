@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Matlab autosave file
+*.asv
+
 # Distribution / packaging
 .Python
 build/
