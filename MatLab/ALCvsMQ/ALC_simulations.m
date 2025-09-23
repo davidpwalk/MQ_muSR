@@ -6,19 +6,57 @@ clear sequence
 ge = 28.02495;
 gmu = -0.1355;
 
-% Coupling constants (in GHz)
+% Coupling constants (in GHz) and rotation angles (in degree)
 A_iso = 0.5148;
 D_parallel = 0.002;
 D_perpen = -D_parallel/2;
 
-% Range of B0
-magnetic_fields = linspace(0, 6, 10);
+thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
+phis = deg2rad([0, 30, 45, 60, 90]);
 
-Iz = sop([1/2 1/2],'ez');
+% Range of B0
+magnetic_fields = linspace(0, 6, 200);
+
+Sx = sop([1/2 1/2],'xe');
+Sy = sop([1/2 1/2],'ye');
 Sz = sop([1/2 1/2],'ze');
 
 Ix = sop([1/2 1/2],'ex');
-Sx = sop([1/2 1/2],'xe');
+Iy = sop([1/2 1/2],'ey');
+Iz = sop([1/2 1/2],'ez');
+
+% Rotation matrices
+Rz = @(theta) [cos(theta) -sin(theta) 0;
+               sin(theta)  cos(theta) 0;
+               0           0          1];
+
+Ry = @(phi) [cos(phi)  0 sin(phi);
+             0         1        0;
+             -sin(phi) 0 cos(phi)];
+
+T_principal = diag([D_perpen, D_perpen, D_parallel]);
+
+% Number of combinations
+N = numel(thetas) * numel(phis);
+
+% Preallocate cell array
+T_labs = cell(1, N);
+
+idx = 1;
+for n = 1:length(thetas)
+    for m = 1:length(phis)
+        theta = thetas(n);
+        phi   = phis(m);
+
+        % rotation
+        R = Rz(phi) * Ry(theta);
+
+        % rotated tensor
+        T_labs{idx} = R * T_principal * R.';
+
+        idx = idx + 1;
+    end
+end
 
 %% Simulating for the first magnetic field in magnetid_fields
 % nu_muon = gmu*magnetic_fields(400);
@@ -79,14 +117,19 @@ sequence.tp=500.0;     % vector with event lengths in ns
 sequence.detection=ones(1,length(sequence.tp)); % detection always on
 
 % Create cells for storing results
-signals=cell(1,length(magnetic_fields));
-allsignals=cell(1,length(magnetic_fields));
-eigenvalues  = cell(1,length(magnetic_fields));  % store eigenvalues
-hamiltonians = cell(1,length(magnetic_fields));  % store full Hamiltonians
+Nfields = numel(magnetic_fields);
+Norient = numel(T_labs);
+Ntotal  = Nfields * Norient;
 
-tic; % Start stopwatch
+signals=cell(1,Ntotal);
+allsignals=cell(1,Ntotal);
+eigenvalues  = cell(1,Ntotal);
+hamiltonians = cell(1,Ntotal);
 
-parfor n=1:length(magnetic_fields)
+parfor idx=1:Ntotal
+    n = mod(idx-1, Nfields) + 1;   % field index
+    k = floor((idx-1)/Nfields) + 1; % orientation index
+
     temp_nu_muon = gmu*magnetic_fields(n);
     temp_nu_electron = ge*magnetic_fields(n);
 
@@ -96,25 +139,31 @@ parfor n=1:length(magnetic_fields)
                      2,0, 'z','e', temp_nu_muon;           % Zeeman of muon
                      1,2, 'x','x', A_iso;             % isotropic HF
                      1,2, 'y','y', A_iso;             % isotropic HF
-                     1,2, 'z','z', A_iso;             % isotropic HF
-                     1,2, 'x','x', D_perpen;          % axially symmetric HF
-                     1,2, 'y','y', D_perpen;          % axially symmetric HF
-                     1,2, 'z','z', D_parallel};       % axially symmetric HF
+                     1,2, 'z','z', A_iso};             % isotropic HF
 
     [temp_experiment, temp_options] = triple(sequence, options); % builds experiment (pulses)
 
-    [temp_system, temp_state, temp_options]=setup(temp_system, temp_options); % build system 
+    [temp_system, temp_state, temp_options]=setup(temp_system, temp_options); % build system
 
-    hamiltonians{n} = temp_system.ham
-    eigenvalues{n} = eig(temp_system.ham)
+    T_lab = T_labs{k};
+
+    % Dipolar Hamiltonian in lab frame
+    H_dip = T_lab(1,1)*Sx*Ix + T_lab(1,2)*Sx*Iy + T_lab(1,3)*Sx*Iz + ...
+       T_lab(2,1)*Sy*Ix + T_lab(2,2)*Sy*Iy + T_lab(2,3)*Sy*Iz + ...
+       T_lab(3,1)*Sz*Ix + T_lab(3,2)*Sz*Iy + T_lab(3,3)*Sz*Iz;
+
+    temp_system.ham = temp_system.ham + H_dip
+
+    hamiltonians{idx} = temp_system.ham
+    eigenvalues{idx} = eig(temp_system.ham)
 
     % disp(eigenvalues{n})
     
     [temp_state, detected_signal, temp_experiment] = homerun(temp_state, temp_system, temp_experiment, temp_options, []);  % propagate for each magnetic field
 
-    signals{n} = detected_signal.sf;    % keep signal from simulation frame
+    signals{idx} = detected_signal.sf;    % keep signal from simulation frame
 
-    allsignals{n} = detected_signal;
+    allsignals{idx} = detected_signal;
 end
 
 toc;
@@ -135,10 +184,10 @@ for n=1:length(magnetic_fields)
 end
 
 %%
-figure(7); clf; hold on
-plot(magnetic_fields, integrals(1, :))
-xlabel('Magnetic field B_0 / T')
-ylabel('Muon Polarization')
+% figure(7); clf; hold on
+% plot(magnetic_fields, integrals(1, :))
+% xlabel('Magnetic field B_0 / T')
+% ylabel('Muon Polarization')
 
 
 %% 
