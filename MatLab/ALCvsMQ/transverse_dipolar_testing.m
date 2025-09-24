@@ -8,17 +8,25 @@ gmu = -0.1355;
 
 % Coupling constants (in GHz) and rotation angles (in degree)
 A_iso = 0.5148;
+A_iso = 0.0;
+A_iso = 0.02;
 D_parallel = 0.002;
+% D_parallel = 0.020;
+D_parallel = 0.0;
 D_perpen = -D_parallel/2;
 
 % thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
 % phis = deg2rad([0, 30, 45, 60, 90]);
 
-thetas = deg2rad([45, 90]);
-phis = deg2rad([45, 90]);
+thetas = deg2rad([45]);
+phis = deg2rad([45]);
 
 % Range of B0
 magnetic_fields = linspace(0, 6, 200);
+% magnetic_fields = linspace(1.8, 2.0, 200);
+% magnetic_fields = linspace(1, 3, 200);
+% magnetic_fields = [4, 5 , 6];
+magnetic_fields = linspace(0, 6, 20);
 
 Sx = sop([1/2 1/2],'xe');
 Sy = sop([1/2 1/2],'ye');
@@ -67,7 +75,7 @@ system.sqn=[0.5 0.5];       % spin quantum numbers
 
 system.interactions = {};
                      
-system.init_state='ez'; % LF mode (muon in the Iz eigenstate)
+system.init_state='ex'; % LF mode (muon in the Iz eigenstate)
 system.eq = 'init';  % equilibrium state is the same as initial state
 
 % Set options
@@ -85,20 +93,18 @@ sequence.detection=ones(1,length(sequence.tp)); % detection always on
 % Preallocate: one cell per orientation. Each cell holds a matrix: (#det_ops) x Nfields
 Nfields = numel(magnetic_fields);
 Norient = numel(T_labs);
-Nt = experiment.tp/experiment.dt + 1;
+Nt = numel(experiment.tp);
 
 signals = cell(1, Norient);
 allsignals = cell(Norient, Nfields);     % only if you need full detected_signal per field
 eigenvalues = cell(1, Norient);
 
 for k = 1:Norient
+    temp_eigenvalues = zeros(4, Nfields);
+
     T_lab = T_labs{k};
 
-    temp_signal = zeros(length(options.det_op), Nt, Nfields);
-    temp_eigenvalues = zeros(4, Nfields);
-    temp_allsignals = cell(1, Nfields);
-
-    parfor n = 1:Nfields
+    for n = 1:Nfields
         temp_nu_muon = gmu * magnetic_fields(n);
         temp_nu_electron = ge * magnetic_fields(n);
 
@@ -106,13 +112,16 @@ for k = 1:Norient
         temp_system.interactions = { ...
             1,0,'z','e', temp_nu_electron; ...
             2,0,'z','e', temp_nu_muon; ...
+            1,2,'x','x', A_iso; ...
+            1,2,'y','y', A_iso; ...
+            1,2,'z','z', A_iso ...
         };
 
         [temp_experiment, temp_options] = triple(sequence, options);
         [temp_system, temp_state, temp_options] = setup(temp_system, temp_options);
 
         % Isotropic dipolar Hamiltonian
-        A_iso_matrix = diag([A_iso, A_iso, A_iso]);
+        A_iso_matrix = 2*pi*diag([A_iso, A_iso, A_iso]);
         H_iso = Sx*A_iso_matrix(1, 1)*Ix + Sy*A_iso_matrix(2, 2)*Iy + Sz*A_iso_matrix(3, 3)*Iz;
 
         % Dipolar Hamiltonian in lab frame
@@ -125,7 +134,7 @@ for k = 1:Norient
         % disp('before')
         % disp(temp_system.ham)
 
-        temp_system.ham = temp_system.ham + 2*pi*(H_dip + H_iso);
+        temp_system.ham = temp_system.ham + 2*pi*(H_dip);
         
         % disp('By hand')
         % disp(temp_system.ham)
@@ -134,12 +143,13 @@ for k = 1:Norient
 
         [temp_state, detected_signal, ~] = homerun(temp_state, temp_system, temp_experiment, temp_options, []);
 
+        Nt = size(detected_signal.sf, 2);
+        temp_signal = zeros(length(options.det_op), Nt, Nfields);
         temp_signal(:, :, n) = detected_signal.sf;
-        temp_allsignals{n} = detected_signal;
+        allsignals{k,n} = detected_signal;
     end
     signals{k} = temp_signal;
     eigenvalues{k} = temp_eigenvalues;
-    allsignals(k,:) = temp_allsignals;
 end
 
 toc;
@@ -183,34 +193,34 @@ ylabel('<I_z>')
 
 
 %% 
+% Each column corresponds to one field, each row to an eigenvalue trajectory
 E_matrix = cell2mat(eigenvalues);
+E_matrix = reshape(E_matrix, size(eigenvalues{1},1), []); 
 
-% reshape to 3-D: (4 eigenvals) × (Nfields) × (Norient)
-E_matrix_3D = reshape(E_matrix, size(eigenvalues{1},1), Nfields, Norient);
+upper_diff = E_matrix(4, :) - E_matrix(3, :);
+lower_diff = E_matrix(2, :) - E_matrix(1, :);
 
-k = 1;
+% Plot eigenvalues vs. field
 figure(10); clf; hold on
-plot(magnetic_fields, real(squeeze(E_matrix_3D(:,:,k))').', 'LineWidth', 1.2)  % -> Nfields x 4
+plot(magnetic_fields, real(E_matrix.'), 'LineWidth', 1.2)
 xlabel('Magnetic field B_0 / T')
 ylabel('Energy (GHz)')
-title(sprintf('Eigenvalues vs B (orientation %d)', k))
-
-figure(10); clf; hold on
-for k = 1:Norient
-    plot(magnetic_fields, real(squeeze(E_matrix_3D(:,:,k))').', 'LineWidth', 0.8)
-end
-xlabel('Magnetic field B_0 / T')
-ylabel('Energy (GHz)')
-
-k = 1;
-upper_diff = real(E_matrix_3D(4,:,k) - E_matrix_3D(3,:,k));   % 1 × Nfields
-lower_diff = real(E_matrix_3D(2,:,k) - E_matrix_3D(1,:,k));   % 1 × Nfields
+title('Hamiltonian eigenvalues vs. magnetic field')
 
 figure(11); clf; hold on
-plot(magnetic_fields, upper_diff, magnetic_fields, lower_diff)
+% plot(magnetic_fields, upper_diff, magnetic_fields, lower_diff)
+plot(magnetic_fields, upper_diff)
 xlabel('Magnetic field B_0 / T')
 ylabel('Energy Difference / GHz')
 legend('Top two levels', 'Bottom two levels')
+
+mask = magnetic_fields > 0.1;
+
+masked_magnetic_fields = magnetic_fields(mask);
+masked_upper_diff = upper_diff(mask);
+
+[min_value, min_index] = min(masked_upper_diff);
+disp(masked_magnetic_fields(min_index))
 
 
 
@@ -245,13 +255,13 @@ fdx = fdx;
 p_idx = fdx < 100 & fdx > -100;
 p_idx = 1:length(fdx);
 
-i2Dcut_nox(fdx(p_idx),magnetic_fields,abs(fdy(p_idx,:)),23);
+i2Dcut_nox(fdx(p_idx),magnetic_fields,abs(fdy(p_idx,:)),25);
 %xlim(0,100);
-title('Hand Hamiltonian')
+title('Spidyan Hamiltonian')
 
 figure(200);
 clf();
-contour(fdx(p_idx),magnetic_fields,abs(fdy(p_idx,:))',22)
+contour(fdx(p_idx),magnetic_fields,abs(fdy(p_idx,:))',24)
 % ylim([1370, 1430])
 % xlim([-80, 80])
 xlabel('f [GHz]')
