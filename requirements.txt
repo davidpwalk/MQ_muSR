@@ -10,6 +10,7 @@ pandas
 scipy
 
 # For better workflow with Git and jupyter nbs
+notebook
 nbstripout
 nbdime
 
