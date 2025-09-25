@@ -325,14 +325,18 @@ else
         end
         
         % checks if the time grid is small enough to fullfill Nyquist
-        if 1/experiment.dt<2*abs(system.highest_freq) 
-            t=linspace(0,experiment.tp(experiment.i),round(experiment.tp(experiment.i)*2.5*system.highest_freq)+1); %If Nyquist is not met, a new time grid is created from the resonance frequency of the spinsystem
-            dtn=t(2)-t(1);
-            warning('timesteps too big for evolution, new timesteps have been created that fit the nyquist criterium.\n old: %6.3f ns; new:  %6.3f ns \n',experiment.dt,dtn);
-            experiment.dt=dtn;
-        else
-            t=linspace(0,experiment.tp(experiment.i),ceil(experiment.tp(experiment.i)/experiment.dt)+1);
-        end
+        % if 1/experiment.dt<2*abs(system.highest_freq) 
+        %     t=linspace(0,experiment.tp(experiment.i),round(experiment.tp(experiment.i)*2.5*system.highest_freq)+1); %If Nyquist is not met, a new time grid is created from the resonance frequency of the spinsystem
+        %     dtn=t(2)-t(1);
+        %     warning('timesteps too big for evolution, new timesteps have been created that fit the nyquist criterium.\n old: %6.3f ns; new:  %6.3f ns \n',experiment.dt,dtn);
+        %     experiment.dt=dtn;
+        % else
+        %     t=linspace(0,experiment.tp(experiment.i),ceil(experiment.tp(experiment.i)/experiment.dt)+1);
+        % end
+        %-- CHANGE OF CODE --%
+        t=linspace(0,experiment.tp(experiment.i),ceil(experiment.tp(experiment.i)/experiment.dt)+1);
+        %-- CHANGE OF CODE --%
+        
         dt=experiment.dt;
     end
     

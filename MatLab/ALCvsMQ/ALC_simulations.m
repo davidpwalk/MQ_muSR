@@ -2,6 +2,9 @@ clear system
 clear options
 clear sequence
 
+%-- Settings --%
+save_all_data = false;
+
 % Zeeman (gamma / GHz/T)
 ge = 28.02495;
 gmu = -0.1355;
@@ -11,15 +14,31 @@ A_iso = 0.5148;
 D_parallel = 0.002;
 D_perpen = -D_parallel/2;
 
-% thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
-% phis = deg2rad([0, 30, 45, 60, 90]);
-
-thetas = deg2rad([45, 90]);
-phis = deg2rad([45, 90]);
+thetas = deg2rad([0, 1, 5, 20, 45, 70, 85, 89, 90]);
+phis = deg2rad([0]); % Phi has no impact on the spectra
 
 % Range of B0
-magnetic_fields = linspace(0, 6, 200);
+magnetic_fields = linspace(1.82, 1.98, 400);
 
+% the system
+system.sqn=[0.5 0.5];       % spin quantum numbers
+
+system.interactions = {};
+                     
+system.init_state='ez'; % LF mode (muon in the Iz eigenstate)
+system.eq = 'init';  % equilibrium state is the same as initial state
+
+% Set options
+options.relaxation=0;       % tells SPIDYAN whether to include relaxation (1) or not (0)
+options.down_conversion=0;  % downconversion of signal (1) or not (0)
+options.det_op={'ez', 'ex'};
+options.labframe = 1;     % lab frame simulation is on
+% options.awg.s_rate = 10;  % can be switched on to improve accuracy (gives sampling rate of simulation in GHz)
+
+sequence.tp=500.0;     % vector with event lengths in ns
+sequence.detection=ones(1,length(sequence.tp)); % detection always on
+
+%-- Generation of relevant matrices --%
 Sx = sop([1/2 1/2],'xe');
 Sy = sop([1/2 1/2],'ye');
 Sz = sop([1/2 1/2],'ze');
@@ -40,10 +59,10 @@ Ry = @(phi) [cos(phi)  0 sin(phi);
 T_principal = diag([D_perpen, D_perpen, D_parallel]);
 
 % Number of combinations
-N = numel(thetas) * numel(phis);
+Norient = numel(thetas) * numel(phis);
 
 % Preallocate cell array
-T_labs = cell(1, N);
+T_labs = cell(1, Norient);
 
 idx = 1;
 for n = 1:length(thetas)
@@ -61,42 +80,30 @@ for n = 1:length(thetas)
     end
 end
 
-%%
-% the system
-system.sqn=[0.5 0.5];       % spin quantum numbers
-
-system.interactions = {};
-                     
-system.init_state='ez'; % LF mode (muon in the Iz eigenstate)
-system.eq = 'init';  % equilibrium state is the same as initial state
-
-% Set options
-options.relaxation=0;       % tells SPIDYAN whether to include relaxation (1) or not (0)
-options.down_conversion=0;  % downconversion of signal (1) or not (0)
-options.det_op={'ez', 'ex'};
-options.labframe = 1;     % lab frame simulation is on
-options.awg.s_rate = 500;  % can be switched on to improve accuracy (gives sampling rate of simulation in GHz)
-
-sequence.tp=500.0;     % vector with event lengths in ns
-sequence.detection=ones(1,length(sequence.tp)); % detection always on
-
+%% Simulation
 [experiment, options] = triple(sequence, options);  % build experiment to get experiment.tp
 
 % Preallocate: one cell per orientation. Each cell holds a matrix: (#det_ops) x Nfields
 Nfields = numel(magnetic_fields);
-Norient = numel(T_labs);
 Nt = experiment.tp/experiment.dt + 1;
 
-signals = cell(1, Norient);
-allsignals = cell(Norient, Nfields);     % only if you need full detected_signal per field
 eigenvalues = cell(1, Norient);
+spectra = zeros(Norient, numel(options.det_op), Nfields);
+
+if save_all_data
+    signals = cell(1, Norient);
+    allsignals = cell(Norient, Nfields);     % only if you need full detected_signal per field
+end
 
 for k = 1:Norient
     T_lab = T_labs{k};
-
-    temp_signal = zeros(length(options.det_op), Nt, Nfields);
     temp_eigenvalues = zeros(4, Nfields);
-    temp_allsignals = cell(1, Nfields);
+    temp_integrals = zeros(numel(options.det_op), Nfields);
+
+    if save_all_data
+        temp_signal = zeros(length(options.det_op), Nt, Nfields);
+        temp_allsignals = cell(1, Nfields);
+    end
 
     parfor n = 1:Nfields
         temp_nu_muon = gmu * magnetic_fields(n);
@@ -121,7 +128,6 @@ for k = 1:Norient
                 Sz*T_lab(3,1)*Ix + Sz*T_lab(3,2)*Iy + Sz*T_lab(3,3)*Iz;
 
         % disp(H_dip)
-        % 
         % disp('before')
         % disp(temp_system.ham)
 
@@ -134,53 +140,55 @@ for k = 1:Norient
 
         [temp_state, detected_signal, ~] = homerun(temp_state, temp_system, temp_experiment, temp_options, []);
 
-        temp_signal(:, :, n) = detected_signal.sf;
-        temp_allsignals{n} = detected_signal;
+        if save_all_data
+            temp_signal(:, :, n) = detected_signal.sf;
+            temp_allsignals{n} = detected_signal;
+        end
+
+        temp_integrals(:,n) = mean(real(detected_signal.sf), 2);
     end
-    signals{k} = temp_signal;
+    
     eigenvalues{k} = temp_eigenvalues;
-    allsignals(k,:) = temp_allsignals;
+    spectra(k,:,:) = temp_integrals;
+
+    if save_all_data
+        signals{k} = temp_signal;
+        allsignals(k,:) = temp_allsignals; 
+    end
 end
 
 toc;
 
 %%
-[experiment, options] = triple(sequence, options);  % build experiment to get experiment.tp
+% [experiment, options] = triple(sequence, options);  % build experiment to get experiment.tp
+% 
+% signal = zeros(size(signals{1}));
+% Nt = size(signals{1}, 2);
+% time = (0:Nt-1) * experiment.dt;
+% 
+% % Integrate
+% integrals = zeros(Norient, numel(options.det_op), numel(magnetic_fields));
+% 
+% for k = 1:Norient
+%     for n = 1:Nfields
+%         % integrate over time (dimension 2)
+%         integrals(k, 1, n) = mean(real(allsignals{k,n}.sf(1,:)));
+%         integrals(k, 2, n) = mean(real(allsignals{k,n}.sf(2,:)));
+%         % squeeze(sum(real(signals{k}), 2)) / Nt;
+%     end
+% end
 
-signal = zeros(size(signals{1}));
-Nt = size(signals{1}, 2);
-time = (0:Nt-1) * experiment.dt;
-
-% Integrate
-integrals = zeros(Norient, numel(options.det_op), numel(magnetic_fields));
-
-for k = 1:Norient
-    for n = 1:Nfields
-        % integrate over time (dimension 2)
-        integrals(k, 1, n) = mean(real(allsignals{k,n}.sf(1,:)));
-        integrals(k, 2, n) = mean(real(allsignals{k,n}.sf(2,:)));
-        % squeeze(sum(real(signals{k}), 2)) / Nt;
-    end
-end
-
-%%
-stride = 100;   % downsample
-t_idx = 1:stride:length(time);
-t_idx = 1:stride;
-trace = squeeze(signals{1}(1, t_idx, end));
-time_ds = time(t_idx);
-
-figure(343); clf; hold on
-plot(time_ds, real(trace))
-xlabel('Time / ns')
-ylabel('Polarization')
-
-%%
-figure(7); clf; hold on
-plot(magnetic_fields, squeeze(integrals(1, 1, :)))
-xlabel('Magnetic field B_0 / T')
-ylabel('<I_z>')
-
+%% Plot time evolution of signal
+% stride = 100;   % downsample
+% t_idx = 1:stride:length(time);
+% t_idx = 1:stride;
+% trace = squeeze(signals{1}(1, t_idx, end));
+% time_ds = time(t_idx);
+% 
+% figure(343); clf; hold on
+% plot(time_ds, real(trace))
+% xlabel('Time / ns')
+% ylabel('Polarization')
 
 %% 
 E_matrix = cell2mat(eigenvalues);
@@ -195,10 +203,9 @@ xlabel('Magnetic field B_0 / T')
 ylabel('Energy (GHz)')
 title(sprintf('Eigenvalues vs B (orientation %d)', k))
 
+k = 1;
 figure(10); clf; hold on
-for k = 1:Norient
-    plot(magnetic_fields, real(squeeze(E_matrix_3D(:,:,k))').', 'LineWidth', 0.8)
-end
+plot(magnetic_fields, real(squeeze(E_matrix_3D(:,:,k))').', 'LineWidth', 0.8)
 xlabel('Magnetic field B_0 / T')
 ylabel('Energy (GHz)')
 
@@ -212,47 +219,92 @@ xlabel('Magnetic field B_0 / T')
 ylabel('Energy Difference / GHz')
 legend('Top two levels', 'Bottom two levels')
 
+mask = magnetic_fields > 0.1;
 
+masked_magnetic_fields = magnetic_fields(mask);
+masked_upper_diff = upper_diff(mask);
 
-%% get the traces in spectral domain
+[min_value, min_index] = min(masked_upper_diff);
+level_crossing = masked_magnetic_fields(min_index);
+disp(level_crossing)
 
+%% get the traces in spectral domain (only works if save_all_data = true)
 
-tdy = zeros(length(allsignals{1}.signals.t{end}),Nfields);
-tdx = allsignals{1}.signals.t{1};
-
-for ii=1:Nfields
-%     tdy(:,ii) = real(signalc{ii}(1,:));
-%     tdy(:,ii) = allsignal{ii}.signals.dc{end}(3,:);
-    % Ix
-%     tdy(:,ii) = allsignal{ii}.signals.sf{end}(4,:);
-%     tdy(:,ii) = tdy(:,ii) - mean(tdy(:,ii));
+if save_all_data
+    tdy = zeros(length(allsignals{1}.signals.t{end}),Nfields);
+    tdx = allsignals{1}.signals.t{1};
     
-    % Iz
-    tdy(:,ii) = allsignals{1,ii}.signals.sf{1}(1,:);
-
-
-    % Ix
-    tdy(:,ii) = allsignals{1,ii}.signals.sf{1}(2,:);
+    for ii=1:Nfields
+    %     tdy(:,ii) = real(signalc{ii}(1,:));
+    %     tdy(:,ii) = allsignal{ii}.signals.dc{end}(3,:);
+        % Ix
+    %     tdy(:,ii) = allsignal{ii}.signals.sf{end}(4,:);
+    %     tdy(:,ii) = tdy(:,ii) - mean(tdy(:,ii));
+        
+        % Iz
+        tdy(:,ii) = allsignals{1,ii}.signals.sf{1}(1,:);
     
     
+        % Ix
+        tdy(:,ii) = allsignals{1,ii}.signals.sf{1}(2,:);
+        
+        
+    end
+    
+    
+    % get spectra
+    [fdy, fdx] = getmultspec(tdy,tdx,2,1);
+    
+    fdx = fdx;
+    p_idx = fdx < 100 & fdx > -100;
+    p_idx = 1:length(fdx);
+    
+    i2Dcut_nox(fdx(p_idx),magnetic_fields,abs(fdy(p_idx,:)),23);
+    %xlim(0,100);
+    title('Hand Hamiltonian')
+    
+    figure(200);
+    clf();
+    contour(fdx(p_idx),magnetic_fields,abs(fdy(p_idx,:))',22)
+    % ylim([1370, 1430])
+    % xlim([-80, 80])
+    xlabel('f [GHz]')
+end
+%% Plot ALC Spectra for different thetas
+det_op = 1;
+peak_positions = [];
+
+% Create figure
+fig = figure('NumberTitle','off','Name','ALC Spectra'); 
+hold on
+for ii = 1:Norient
+    [~, min_index] = min(spectra(ii, det_op, :));
+    peak_positions(ii) = magnetic_fields(min_index);
+    plot(magnetic_fields, squeeze(spectra(ii, det_op, :)))
+end
+peak_positions = [rad2deg(thetas(:)), peak_positions(:)];
+hold off
+xlabel('B / T')
+ylabel('P_z')
+% xlim([1.8675, 1.9325])
+
+legendStrings = arrayfun(@(x) sprintf('\\theta = %.1f°', x), rad2deg(thetas), 'UniformOutput', false);
+legend(legendStrings, 'Location', 'best')
+
+% Use print with -painters (vector graphics) and -dpdf
+% exportgraphics(fig, 'C:\Users\walk_d\GitHub\MQ_muSR\Figures\ALC_simulations\Sim_different_theta.pdf', 'ContentType','vector','BackgroundColor','none')
+
+%% Integrate over thetas
+
+weights = sin(thetas);
+powder_spectrum = zeros(Nfields, 1);
+% TODO: check if the weighted sum is actually calculated correctly
+for ii = 1:Nfields
+    powder_spectrum(ii) = sum(weights * spectra(:, det_op, ii))/sum(weights);
 end
 
-
-% get spectra
-[fdy, fdx] = getmultspec(tdy,tdx,2,1);
-
-fdx = fdx;
-p_idx = fdx < 100 & fdx > -100;
-p_idx = 1:length(fdx);
-
-i2Dcut_nox(fdx(p_idx),magnetic_fields,abs(fdy(p_idx,:)),23);
-%xlim(0,100);
-title('Hand Hamiltonian')
-
-figure(200);
-clf();
-contour(fdx(p_idx),magnetic_fields,abs(fdy(p_idx,:))',22)
-% ylim([1370, 1430])
-% xlim([-80, 80])
-xlabel('f [GHz]')
-
+fig = figure('NumberTitle','off','Name','ALC Powder Spectrum');
+hold on
+plot(magnetic_fields, powder_spectrum)
+xlabel('B / T')
+ylabel('P_z')
