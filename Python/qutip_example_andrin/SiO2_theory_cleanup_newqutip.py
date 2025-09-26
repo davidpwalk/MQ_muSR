@@ -86,13 +86,12 @@ plt.plot(B_vec, i13, label = '13')
 plt.plot(B_vec, i24, label = '24')
 plt.plot(B_vec, i34, label = '34')
 plt.legend(loc=0)
-
-# plt.show()
+plt.show()
 
 #%% give it a try with qutip
 
 import qutip as qt
-from jacobi_math import jacobi_diagonalize
+
 
 B_vec = np.linspace(0.04,0.09,200)
 # B_vec = np.array([0.0610])

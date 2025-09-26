@@ -14,7 +14,7 @@ A_iso = 0.5148;
 D_parallel = 0.002;
 D_perpen = -D_parallel/2;
 
-thetas = deg2rad([0, 1, 5, 20, 45, 70, 85, 89, 90]);
+thetas = deg2rad(linspace(0, 90, 200));
 phis = deg2rad([0]); % Phi has no impact on the spectra
 
 % Range of B0
@@ -94,6 +94,8 @@ if save_all_data
     signals = cell(1, Norient);
     allsignals = cell(Norient, Nfields);     % only if you need full detected_signal per field
 end
+
+tic;
 
 for k = 1:Norient
     T_lab = T_labs{k};

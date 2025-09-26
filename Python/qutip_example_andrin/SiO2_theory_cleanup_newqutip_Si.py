@@ -11,6 +11,8 @@ import scipy
 from scipy import interpolate
 from scipy import linalg
 
+from Python import jacobi_math
+
 #%% analytical
 B_vec = np.linspace(0.04,0.068,100)
 B_vec = np.linspace(0.0,12.0,300)
@@ -90,7 +92,7 @@ plt.legend(loc=0)
 #%% give it a try with qutip
 
 import qutip as qt
-import jacobi_math
+import Python.jacobi_math
 
 B_vec = np.linspace(0.04,0.09,200)
 # B_vec = np.array([0.0610])

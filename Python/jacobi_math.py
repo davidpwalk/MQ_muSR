@@ -4,24 +4,24 @@ import random as rand
 def jacobi_diagonalize(sym_arr, offset_threshold=10**-6, record = lambda off,
     cur_diag, cur_steps: None, start = lambda mat: None, stop = lambda res :
     None):
-  n =  len(sym_arr)
-  diagonal = sym_arr.astype(float).copy()
-  steps = np.eye(n)
-  off = offset(diagonal)
-  start(diagonal)
-  record(off, diagonal, steps)
-  while off >= offset_threshold:
-    largest_offset_pos = largest_off_index(diagonal)
-    diagonalized_small = diagonalize_2by2(small_matr_of(diagonal,
-      largest_offset_pos))
-    as_n_mat =  promote(diagonalized_small[0],largest_offset_pos, n)
-    diagonal = np.dot(np.dot(np.transpose(as_n_mat), diagonal), as_n_mat)
-    steps = np.dot(steps, as_n_mat)
-    off = offset(diagonal)
-    record(off, diagonal, steps)
-  res =  [steps, diagonal, np.transpose(steps)]
-  stop(res)
-  return res
+      n =  len(sym_arr)
+      diagonal = sym_arr.astype(float).copy()
+      steps = np.eye(n)
+      off = offset(diagonal)
+      start(diagonal)
+      record(off, diagonal, steps)
+      while off >= offset_threshold:
+        largest_offset_pos = largest_off_index(diagonal)
+        diagonalized_small = diagonalize_2by2(small_matr_of(diagonal,
+          largest_offset_pos))
+        as_n_mat =  promote(diagonalized_small[0],largest_offset_pos, n)
+        diagonal = np.dot(np.dot(np.transpose(as_n_mat), diagonal), as_n_mat)
+        steps = np.dot(steps, as_n_mat)
+        off = offset(diagonal)
+        record(off, diagonal, steps)
+      res =  [steps, diagonal, np.transpose(steps)]
+      stop(res)
+      return res
 
 def generate_matrix(rows, cols, generating_function):
   result = []
