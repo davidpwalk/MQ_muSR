@@ -195,8 +195,8 @@ def stick_spectrum(theta, B):
     return fig
 
 #%% Plotting
-fig = time_signal(4, 0)
+fig = time_signal(4, 10)
 fig.show()
 
-fig = stick_spectrum(4, 5)
+fig = stick_spectrum(4, 0)
 fig.show()

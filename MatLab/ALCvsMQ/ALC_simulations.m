@@ -15,6 +15,7 @@ D_parallel = 0.002;
 D_perpen = -D_parallel/2;
 
 thetas = deg2rad(linspace(0, 90, 200));
+thetas = thetas (85:105);
 phis = deg2rad([0]); % Phi has no impact on the spectra
 
 % Range of B0
@@ -35,7 +36,7 @@ options.det_op={'ez', 'ex'};
 options.labframe = 1;     % lab frame simulation is on
 % options.awg.s_rate = 10;  % can be switched on to improve accuracy (gives sampling rate of simulation in GHz)
 
-sequence.tp=500.0;     % vector with event lengths in ns
+sequence.tp=2000.0;     % vector with event lengths in ns
 sequence.detection=ones(1,length(sequence.tp)); % detection always on
 
 %-- Generation of relevant matrices --%
@@ -285,6 +286,7 @@ for ii = 1:Norient
     plot(magnetic_fields, squeeze(spectra(ii, det_op, :)))
 end
 peak_positions = [rad2deg(thetas(:)), peak_positions(:)];
+peak_positions(peak_positions(:, 2) < 1.85, :) = []; % Drop thetas where there is no peak at all
 hold off
 xlabel('B / T')
 ylabel('P_z')
@@ -296,6 +298,11 @@ legend(legendStrings, 'Location', 'best')
 % Use print with -painters (vector graphics) and -dpdf
 % exportgraphics(fig, 'C:\Users\walk_d\GitHub\MQ_muSR\Figures\ALC_simulations\Sim_different_theta.pdf', 'ContentType','vector','BackgroundColor','none')
 
+fig = figure('NumberTitle','off','Name','Peak Positions vs theta');
+hold on;
+plot(peak_positions(:, 1), peak_positions(:, 2))
+hold off;
+% save('peak_positions.mat','peak_positions')
 %% Integrate over thetas
 
 weights = sin(thetas);
@@ -310,3 +317,15 @@ hold on
 plot(magnetic_fields, powder_spectrum)
 xlabel('B / T')
 ylabel('P_z')
+
+%% Compare peak positions to analytical counterpart
+
+s = load("ana_peak_positions.mat");
+ana_peak_positions = s.peak_positions;
+
+peak_positions_diff = ana_peak_positions(:, 2) - peak_positions(:, 2);
+
+fig = figure('NumberTitle','off','Name','Peak Pos difference');
+hold on
+plot(peak_positions(:, 1), peak_positions_diff)
+hold off
