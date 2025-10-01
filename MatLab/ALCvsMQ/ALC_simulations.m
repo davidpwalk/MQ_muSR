@@ -34,9 +34,9 @@ options.relaxation=0;       % tells SPIDYAN whether to include relaxation (1) or
 options.down_conversion=0;  % downconversion of signal (1) or not (0)
 options.det_op={'ez', 'ex'};
 options.labframe = 1;     % lab frame simulation is on
-% options.awg.s_rate = 10;  % can be switched on to improve accuracy (gives sampling rate of simulation in GHz)
+options.awg.s_rate = 500;  % can be switched on to improve accuracy (gives sampling rate of simulation in GHz)
 
-sequence.tp=2000.0;     % vector with event lengths in ns
+sequence.tp=500.0;     % vector with event lengths in ns
 sequence.detection=ones(1,length(sequence.tp)); % detection always on
 
 %-- Generation of relevant matrices --%
