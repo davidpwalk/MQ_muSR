@@ -17,15 +17,17 @@ set_demonlab_style()
 pio.templates.default = "DemonLab"
 #%% Parameters and calculations of spin operators and tensors
 # Magnetic field range (in Tesla)
-magnetic_fields = np.linspace(0, 1, 50)
+magnetic_fields = np.linspace(0, 12, 13)
 
 # Zeeman (gamma / GHz/T)
 ge = 28.02495
 gmu = -0.1355
 
 # Coupling constants (in GHz) and rotation angle (in degrees)
-A_iso = 0.5148
+# A_iso = 0.5148
+A_iso = 0.0
 D_parallel = 0.002
+D_parallel = 0.3
 D_perp = -D_parallel/2
 
 # Rotation angles (in degrees)
@@ -61,13 +63,16 @@ for theta in thetas:
     T_labs.append(qt.Qobj(T_rot))
 
 #%% Simulation
+# Settings
+O = Ix  # observable
+threshold = 1e-6  # amplitude threshold for transitions
+transition_type_filter = None  # "SQ", "ZQ", "DQ" or None for all
+
+
 time = np.linspace(0, 500, 2000)
 n_theta = len(thetas)
 n_B = len(magnetic_fields)
 n_time = len(time)
-
-threshold = 1e-6  # amplitude threshold for transitions
-transition_type_filter = None  # "SQ", "ZQ", "DQ" or None for all
 
 # Transition count is small: max is 4 levels → 6 transitions
 max_transitions = 6
@@ -107,8 +112,8 @@ for ii, T_lab in enumerate(T_labs):
         energies = energy_matrix.diagonal()
         energies_arr[ii, jj, :] = energies
 
-        Ix_dense = Ix.full()
-        Ix_eigen = psi.conj().T @ Ix_dense @ psi
+        O_dense = O.full()
+        O_eigen = psi.conj().T @ O_dense @ psi
 
         freqs = []
         amps = []
@@ -120,9 +125,9 @@ for ii, T_lab in enumerate(T_labs):
                     if ttype != transition_type_filter:
                         continue
 
-                amp = abs(Ix_eigen[kk, ll]) ** 2
+                amp = abs(O_eigen[kk, ll]) ** 2
                 ttype = classify_transition(ll + 1, kk + 1)
-                print(f'ttype: {ttype}, kk: {kk + 1}, ll: {ll + 1}, amp: {amp}') if ttype == "DQ" or ttype == "ZQ" else None
+                print(f'ttype: {ttype}, kk: {kk + 1}, ll: {ll + 1}, amp: {amp}, O: {O_dense}') if ttype == "DQ" or ttype == "ZQ" else None
                 if amp > threshold:
                     freqs.append(energies[ll] - energies[kk])
                     amps.append(amp)
