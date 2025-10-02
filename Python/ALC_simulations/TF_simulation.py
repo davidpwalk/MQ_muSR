@@ -17,21 +17,20 @@ set_demonlab_style()
 pio.templates.default = "DemonLab"
 #%% Parameters and calculations of spin operators and tensors
 # Magnetic field range (in Tesla)
-magnetic_fields = np.linspace(0, 12, 13)
+magnetic_fields = np.linspace(0, 10, 20)
+# magnetic_fields = [0]
 
 # Zeeman (gamma / GHz/T)
 ge = 28.02495
 gmu = -0.1355
 
 # Coupling constants (in GHz) and rotation angle (in degrees)
-# A_iso = 0.5148
-A_iso = 0.0
+A_iso = 0.5148
 D_parallel = 0.002
-D_parallel = 0.3
 D_perp = -D_parallel/2
 
 # Rotation angles (in degrees)
-thetas = np.radians(np.linspace(0, 90, 400, dtype=np.float64))
+thetas = np.radians(np.linspace(0, 180, 400, dtype=np.float64))
 # thetas = np.radians([45])
 
 # Define the spin operators for S=1/2 and I=1/2
@@ -64,12 +63,12 @@ for theta in thetas:
 
 #%% Simulation
 # Settings
-O = Ix  # observable
+O = Iz  # observable
 threshold = 1e-6  # amplitude threshold for transitions
-transition_type_filter = None  # "SQ", "ZQ", "DQ" or None for all
+transition_type_filter = None  # "SQE", "SQMu",  "ZQ", "DQ" or None for all
 
 
-time = np.linspace(0, 500, 2000)
+time = np.linspace(0, 2000, 8000)
 n_theta = len(thetas)
 n_B = len(magnetic_fields)
 n_time = len(time)
@@ -90,8 +89,79 @@ def classify_transition(i, j):
         return "DQ"
     elif pair == {2, 3}:
         return "ZQ"
-    else:
-        return "SQ"
+    elif pair == {1, 2} or pair == {2, 4}:
+        return "SQE"
+    elif pair == {1, 3} or pair == {3, 4}:
+        return "SQMu"
+
+
+import numpy as np
+
+def merge_transitions(freqs, amps, types, tol=1e-8, zero_tol=1e-12):
+    """
+    Merge transitions whose frequencies are pairwise within `tol` (single-linkage / connected components).
+    - freqs, amps, types: sequences (will be converted to numpy arrays)
+    - tol: absolute frequency tolerance for linking two transitions
+    - zero_tol: if set, snap |freq| <= zero_tol to 0 before clustering (useful for near-zero symmetric pairs)
+    Returns: (merged_freqs, merged_amps, merged_types) as Python lists (sorted by frequency).
+    """
+    freqs = np.asarray(freqs, dtype=float)
+    amps = np.asarray(amps, dtype=float)
+    types = np.asarray(types, dtype=object)
+
+    if freqs.size == 0:
+        return [], [], []
+
+    # optional: snap tiny frequencies to zero
+    if zero_tol is not None:
+        small = np.abs(freqs) <= zero_tol
+        freqs[small] = 0.0
+
+    # adjacency: True where pairwise difference <= tol
+    adj = np.abs(freqs[:, None] - freqs[None, :]) <= tol
+
+    # find connected components (DFS)
+    n = len(freqs)
+    visited = np.zeros(n, dtype=bool)
+    groups = []
+    for i in range(n):
+        if visited[i]:
+            continue
+        stack = [i]
+        comp = []
+        visited[i] = True
+        while stack:
+            v = stack.pop()
+            comp.append(v)
+            neighbors = np.where(adj[v] & ~visited)[0]
+            for w in neighbors:
+                visited[w] = True
+                stack.append(w)
+        groups.append(comp)
+
+    # merge each component: amplitude sum, frequency = amplitude-weighted mean (fallback to simple mean)
+    merged_freqs = []
+    merged_amps = []
+    merged_types = []
+    for comp in groups:
+        idx = np.array(comp)
+        total_amp = amps[idx].sum()
+        if total_amp > 0:
+            freq_rep = (freqs[idx] * amps[idx]).sum() / total_amp
+        else:
+            freq_rep = freqs[idx].mean()
+        merged_freqs.append(freq_rep)
+        merged_amps.append(total_amp)
+        merged_types.append(",".join(sorted(set(types[idx].tolist()))))
+
+    # sort by frequency before returning
+    order = np.argsort(merged_freqs)
+    merged_freqs = np.array(merged_freqs)[order].tolist()
+    merged_amps  = np.array(merged_amps)[order].tolist()
+    merged_types = np.array(merged_types, dtype=object)[order].tolist()
+
+    return merged_freqs, merged_amps, merged_types
+
 
 for ii, T_lab in enumerate(T_labs):
     for jj, magnetic_field in enumerate(magnetic_fields):
@@ -100,9 +170,9 @@ for ii, T_lab in enumerate(T_labs):
 
         H_zeeman = nu_electron * Sz + nu_muon * Iz
         H_iso = A_iso * (Sx * Ix + Sy * Iy + Sz * Iz)
-        H_dip = (Sx * (T_lab[0, 0] * Ix + Sx * T_lab[0, 1] * Iy + Sx * T_lab[0, 2] * Iz) +
-                 Sy * (T_lab[1, 0] * Ix + Sy * T_lab[1, 1] * Iy + Sy * T_lab[1, 2] * Iz) +
-                 Sz * (T_lab[2, 0] * Ix + Sz * T_lab[2, 1] * Iy + Sz * T_lab[2, 2] * Iz))
+        H_dip = (Sx * T_lab[0, 0] * Ix + Sx * T_lab[0, 1] * Iy + Sx * T_lab[0, 2] * Iz +
+                 Sy * T_lab[1, 0] * Ix + Sy * T_lab[1, 1] * Iy + Sy * T_lab[1, 2] * Iz +
+                 Sz * T_lab[2, 0] * Ix + Sz * T_lab[2, 1] * Iy + Sz * T_lab[2, 2] * Iz)
 
         H_tot = H_zeeman + H_iso + H_dip
 
@@ -127,7 +197,7 @@ for ii, T_lab in enumerate(T_labs):
 
                 amp = abs(O_eigen[kk, ll]) ** 2
                 ttype = classify_transition(ll + 1, kk + 1)
-                print(f'ttype: {ttype}, kk: {kk + 1}, ll: {ll + 1}, amp: {amp}, O: {O_dense}') if ttype == "DQ" or ttype == "ZQ" else None
+                # print(f'ttype: {ttype}, kk: {kk+1}, ll: {ll+1}, amp: {amp}, O: \n{O_eigen}') if ttype == 'DQ' or ttype == 'ZQ' else None
                 if amp > threshold:
                     freqs.append(energies[ll] - energies[kk])
                     amps.append(amp)
@@ -136,6 +206,7 @@ for ii, T_lab in enumerate(T_labs):
                     types.append(ttype)
 
         # store frequencies/amplitudes (pad with NaN if fewer than max_transitions)
+        freqs, amps, types = merge_transitions(freqs, amps, types)
         n_trans = len(freqs)
         frequencies_arr[ii, jj, :n_trans] = freqs
         amplitudes_arr[ii, jj, :n_trans] = amps
@@ -163,7 +234,7 @@ results = xr.Dataset(
         "time": time,
         "level": np.arange(4),
         "transition": np.arange(max_transitions),
-        "transition_type": ["SQ", "ZQ", "DQ"],
+        "transition_type": ["SQE", "SQMu", "ZQ", "DQ"],
     }
 )
 
@@ -183,24 +254,6 @@ def time_signal(theta, B, transition_type=None):
         mask = results['transition_types'].sel(theta=theta, B=B, method='nearest') == transition_type
         freqs = results['frequencies'].sel(theta=theta, B=B, method='nearest').where(mask, drop=True).values
         amps = results['amplitudes'].sel(theta=theta, B=B, method='nearest').where(mask, drop=True).values
-
-        # remove NaN padding
-        mask = np.isfinite(freqs) & np.isfinite(amps)
-        freqs = freqs[mask]
-        amps = amps[mask]
-
-        signal = np.zeros_like(time, dtype=float)
-        for amp, freq in zip(amps, freqs):
-            signal += amp * np.cos(2 * np.pi * freq * time)
-
-        fig = px.line(x=time, y=signal, labels={'x': 'Time / ns', 'y': 'Signal'})
-        return fig
-
-def stick_spectrum(theta, B, transition_type=None):
-    if transition_type:
-        mask = results['transition_types'].sel(theta=theta, B=B, method='nearest') == transition_type
-        freqs = results['frequencies'].sel(theta=theta, B=B, method='nearest').where(mask, drop=True).values
-        amps = results['amplitudes'].sel(theta=theta, B=B, method='nearest').where(mask, drop=True).values
     else:
         freqs = results['frequencies'].sel(theta=theta, B=B, method='nearest').values
         amps = results['amplitudes'].sel(theta=theta, B=B, method='nearest').values
@@ -210,12 +263,35 @@ def stick_spectrum(theta, B, transition_type=None):
     freqs = freqs[mask]
     amps = amps[mask]
 
+    signal = np.zeros_like(time, dtype=float)
+    for amp, freq in zip(amps, freqs):
+        signal += amp * np.cos(2 * np.pi * freq * time)
+
+    fig = px.line(x=time, y=signal, labels={'x': 'Time / ns', 'y': 'Signal'})
+    return fig
+
+def stick_spectrum(theta, B, transition_type=None):
+    if transition_type:
+        mask = results['transition_types'].sel(theta=theta, B=B, method='nearest') == transition_type
+        freqs = results['frequencies'].sel(theta=theta, B=B, method='nearest').where(mask, drop=True).values
+        amps = results['amplitudes'].sel(theta=theta, B=B, method='nearest').where(mask, drop=True).values
+        ttypes = results['transition_types'].sel(theta=theta, B=B, method='nearest').where(mask, drop=True).values
+    else:
+        freqs = results['frequencies'].sel(theta=theta, B=B, method='nearest').values
+        amps = results['amplitudes'].sel(theta=theta, B=B, method='nearest').values
+        ttypes = results['transition_types'].sel(theta=theta, B=B, method='nearest').values
+
+    # remove NaN padding
+    mask = np.isfinite(freqs) & np.isfinite(amps)
+    freqs = freqs[mask]
+    amps = amps[mask]
+
     fig = go.Figure()
-    for f, a in zip(freqs, amps):
+    for freq, amp, ttype in zip(freqs, amps, ttypes):
         fig.add_trace(
             go.Scatter(
-                x=[f, f],
-                y=[0, a],
+                x=[freq, freq],
+                y=[0, amp],
                 mode="lines",
                 line=dict(color="black"),
                 showlegend=False
@@ -223,22 +299,14 @@ def stick_spectrum(theta, B, transition_type=None):
         )
         fig.add_trace(
             go.Scatter(
-                x=[f], y=[a],
+                x=[freq], y=[amp],
                 mode="markers",
                 marker=dict(color="rgba(0,0,0,0)"),
-                name=f"{f:.3f} GHz; {a:.3f}, {transition_type}",
+                name=f"{freq:.3f} GHz; {amp:.3f}, {ttype}",
             )
         )
-    if len(freqs) > 1:
-        fig.add_trace(
-            go.Scatter(
-                x=[freqs.min() - 1, freqs.max() + 1],
-                y=[0, 0],
-                mode="lines",
-                line=dict(color="black"),
-                showlegend=False
-            )
-        )
+
+    fig.add_hline(y=0, line=dict(color="black"), opacity=1)
 
     fig.update_layout(
         xaxis_title="Frequency / GHz",
@@ -248,11 +316,12 @@ def stick_spectrum(theta, B, transition_type=None):
     return fig
 
 #%% Plotting single spectra examples
-# fig = time_signal(4, 6)
-# fig.show()
-#
-fig = stick_spectrum(4, 6, transition_type="SQ")
+fig = time_signal(10, 0)
+fig.update_layout(xaxis_range=[0, 30])
 fig.show()
+
+fig = stick_spectrum(4, 0)
+# fig.show()
 
 #%% Sum time-domain signals over angles
 # TODO: check impact of weighting and normalization
@@ -261,7 +330,8 @@ fig.show()
 weights = np.sin(np.radians(signals.theta))
 powder_signals = (signals * weights).sum(dim='theta') / weights.sum()
 
-fig = px.line(x=powder_signals.sel(B=2).time, y=powder_signals.sel(B=6))
+fig = px.line(x=powder_signals.sel(B=0).time, y=powder_signals.sel(B=0), labels={'x': 'Time / ns', 'y': 'Signal'})
+fig.update_layout(xaxis_range=[0, 30])
 fig.show()
 
 def apodize(signal):
@@ -276,8 +346,9 @@ def apodize(signal):
 
 def ft(signal):
     signal = apodize(signal)
+    dt = time[1] - time[0]
     power_spectrum = (abs(fft(signal))**2)[:len(signal)//2]
-    freq = fftfreq(len(signal), d=1/len(signal))[:len(signal)//2]
+    freq = fftfreq(len(signal), d=dt)[:len(signal)//2]
     return power_spectrum, freq
 
 def plot_powder_spectrum(signal):
@@ -288,6 +359,6 @@ def plot_powder_spectrum(signal):
 
 #%% Plot powder spectra
 
-powder_spectrum, freq = ft(powder_signals.sel(B=2))
-fig = px.line(x=freq, y=powder_spectrum, labels={'x': 'Frequency / GHz', 'y': 'Intensity'})
+powder_spectrum, freq = ft(powder_signals.sel(B=0))
+fig = px.line(x=freq, y=powder_spectrum/max(powder_spectrum), labels={'x': 'Frequency / GHz', 'y': 'Intensity'})
 fig.show()
