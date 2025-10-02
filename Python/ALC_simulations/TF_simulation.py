@@ -17,8 +17,8 @@ set_demonlab_style()
 pio.templates.default = "DemonLab"
 #%% Parameters and calculations of spin operators and tensors
 # Magnetic field range (in Tesla)
-magnetic_fields = np.linspace(0, 10, 20)
-# magnetic_fields = [0]
+# magnetic_fields = np.linspace(0, 10, 20)
+magnetic_fields = [0]
 
 # Zeeman (gamma / GHz/T)
 ge = 28.02495
@@ -30,8 +30,8 @@ D_parallel = 0.002
 D_perp = -D_parallel/2
 
 # Rotation angles (in degrees)
-thetas = np.radians(np.linspace(0, 180, 400, dtype=np.float64))
-# thetas = np.radians([45])
+thetas = np.radians(np.linspace(0, 180, 20, dtype=np.float64))
+thetas = np.radians([90])
 
 # Define the spin operators for S=1/2 and I=1/2
 S = 0.5
@@ -63,7 +63,7 @@ for theta in thetas:
 
 #%% Simulation
 # Settings
-O = Iz  # observable
+O = Ix  # observable
 threshold = 1e-6  # amplitude threshold for transitions
 transition_type_filter = None  # "SQE", "SQMu",  "ZQ", "DQ" or None for all
 
@@ -198,15 +198,16 @@ for ii, T_lab in enumerate(T_labs):
                 amp = abs(O_eigen[kk, ll]) ** 2
                 ttype = classify_transition(ll + 1, kk + 1)
                 # print(f'ttype: {ttype}, kk: {kk+1}, ll: {ll+1}, amp: {amp}, O: \n{O_eigen}') if ttype == 'DQ' or ttype == 'ZQ' else None
+                print(f'theta: {np.degrees(thetas[ii])}, energies: {energies}, \n T_lab: {T_lab} \nO: \n{O_eigen}')
                 if amp > threshold:
                     freqs.append(energies[ll] - energies[kk])
                     amps.append(amp)
-
                     ttype = classify_transition(ll + 1, kk + 1)
                     types.append(ttype)
 
         # store frequencies/amplitudes (pad with NaN if fewer than max_transitions)
         freqs, amps, types = merge_transitions(freqs, amps, types)
+        print(f'freqs: {freqs}, amps: {amps}, types: {types}')
         n_trans = len(freqs)
         frequencies_arr[ii, jj, :n_trans] = freqs
         amplitudes_arr[ii, jj, :n_trans] = amps
@@ -316,12 +317,12 @@ def stick_spectrum(theta, B, transition_type=None):
     return fig
 
 #%% Plotting single spectra examples
-fig = time_signal(10, 0)
+fig = time_signal(50, 0)
 fig.update_layout(xaxis_range=[0, 30])
 fig.show()
 
-fig = stick_spectrum(4, 0)
-# fig.show()
+fig = stick_spectrum(90, 0)
+fig.show()
 
 #%% Sum time-domain signals over angles
 # TODO: check impact of weighting and normalization
@@ -347,8 +348,8 @@ def apodize(signal):
 def ft(signal):
     signal = apodize(signal)
     dt = time[1] - time[0]
-    power_spectrum = (abs(fft(signal))**2)[:len(signal)//2]
-    freq = fftfreq(len(signal), d=dt)[:len(signal)//2]
+    power_spectrum = (abs(fft(signal))**2)
+    freq = fftfreq(len(signal), d=dt)
     return power_spectrum, freq
 
 def plot_powder_spectrum(signal):
