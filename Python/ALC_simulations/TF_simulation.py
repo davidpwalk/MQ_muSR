@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 import plotly.io as pio
 import qutip as qt
 import xarray as xr
-from scipy.fft import fft, fftfreq
+from scipy.fft import fft, fftfreq, fftshift
 
 from Python.jacobi_math import jacobi_diagonalize
 
@@ -18,20 +18,21 @@ pio.templates.default = "DemonLab"
 #%% Parameters and calculations of spin operators and tensors
 # Magnetic field range (in Tesla)
 # magnetic_fields = np.linspace(0, 10, 20)
-magnetic_fields = [0]
+magnetic_fields = [1]
 
 # Zeeman (gamma / GHz/T)
 ge = 28.02495
 gmu = -0.1355
 
 # Coupling constants (in GHz) and rotation angle (in degrees)
-A_iso = 0.5148
+# A_iso = 0.5148
+A_iso = 0.0
 D_parallel = 0.002
 D_perp = -D_parallel/2
 
 # Rotation angles (in degrees)
-thetas = np.radians(np.linspace(0, 180, 20, dtype=np.float64))
-thetas = np.radians([90])
+thetas = np.radians(np.linspace(0, 90, 200, dtype=np.float64))
+# thetas = np.radians([0, 45, 90, 180])
 
 # Define the spin operators for S=1/2 and I=1/2
 S = 0.5
@@ -44,22 +45,25 @@ Ix = qt.tensor(qt.qeye(int(2*S + 1)), qt.jmat(I, 'x'))
 Iy = qt.tensor(qt.qeye(int(2*S + 1)), qt.jmat(I, 'y'))
 Iz = qt.tensor(qt.qeye(int(2*S + 1)), qt.jmat(I, 'z'))
 
+S_ops = [Sx, Sy, Sz]
+I_ops = [Ix, Iy, Iz]
+
 T_principal = np.diag([D_perp, D_perp, D_parallel])
 
 
 # Rotation matrix
 # TODO: check if this is the right one to remain (is Ry or Rz?)
-def Rz(theta):
-    return np.array([[np.cos(theta), -np.sin(theta), 0],
-                     [np.sin(theta),  np.cos(theta), 0],
-                     [0,            0,           1]])
+def Rx(theta):
+    return np.array([[1,             0,              0],
+                     [0, np.cos(theta), -np.sin(theta)],
+                     [0, np.sin(theta),  np.cos(theta)]])
 
-# Generate rotated tensors (T_labs are of type Qobj)
+# Generate rotated tensors
 T_labs = []
 for theta in thetas:
-    R = Rz(theta)
+    R = Rx(theta)
     T_rot = R @ T_principal @ R.T
-    T_labs.append(qt.Qobj(T_rot))
+    T_labs.append(T_rot)
 
 #%% Simulation
 # Settings
@@ -68,7 +72,7 @@ threshold = 1e-6  # amplitude threshold for transitions
 transition_type_filter = None  # "SQE", "SQMu",  "ZQ", "DQ" or None for all
 
 
-time = np.linspace(0, 2000, 8000)
+time = np.linspace(0, 8000, 16000)
 n_theta = len(thetas)
 n_B = len(magnetic_fields)
 n_time = len(time)
@@ -170,9 +174,11 @@ for ii, T_lab in enumerate(T_labs):
 
         H_zeeman = nu_electron * Sz + nu_muon * Iz
         H_iso = A_iso * (Sx * Ix + Sy * Iy + Sz * Iz)
-        H_dip = (Sx * T_lab[0, 0] * Ix + Sx * T_lab[0, 1] * Iy + Sx * T_lab[0, 2] * Iz +
-                 Sy * T_lab[1, 0] * Ix + Sy * T_lab[1, 1] * Iy + Sy * T_lab[1, 2] * Iz +
-                 Sz * T_lab[2, 0] * Ix + Sz * T_lab[2, 1] * Iy + Sz * T_lab[2, 2] * Iz)
+        H_dip = qt.Qobj(np.zeros(Sx.shape, dtype=complex), dims=Sx.dims)
+        for a in range(len(S_ops)):
+            for b in range(len(S_ops)):
+                scalar = float(T_lab[a, b])
+                H_dip += scalar * (S_ops[a] * I_ops[b])
 
         H_tot = H_zeeman + H_iso + H_dip
 
@@ -317,11 +323,12 @@ def stick_spectrum(theta, B, transition_type=None):
     return fig
 
 #%% Plotting single spectra examples
-fig = time_signal(50, 0)
+fig = time_signal(90, 0)
 fig.update_layout(xaxis_range=[0, 30])
 fig.show()
 
-fig = stick_spectrum(90, 0)
+for theta in [0, 45, 90]:
+    fig = stick_spectrum(theta, 1)
 fig.show()
 
 #%% Sum time-domain signals over angles
@@ -331,35 +338,38 @@ fig.show()
 weights = np.sin(np.radians(signals.theta))
 powder_signals = (signals * weights).sum(dim='theta') / weights.sum()
 
-fig = px.line(x=powder_signals.sel(B=0).time, y=powder_signals.sel(B=0), labels={'x': 'Time / ns', 'y': 'Signal'})
-fig.update_layout(xaxis_range=[0, 30])
+fig = px.line(x=powder_signals.sel(B=1).time, y=powder_signals.sel(B=1), labels={'x': 'Time / ns', 'y': 'Signal'})
 fig.show()
 
 def apodize(signal):
     n = len(signal)
+    dt = time[1] - time[0]
     window = np.hanning(2*n)[n:]
     apodized_signal = signal * window
 
     n_fft = 1 << (n - 1).bit_length()  # next power of 2
     padded = np.zeros(n_fft)
     padded[:n] = apodized_signal
-    return padded
+    time_padded = np.arange(n_fft) * dt
+    return padded, time_padded
 
 def ft(signal):
-    signal = apodize(signal)
+    signal, time = apodize(signal)
+    fig = px.line(x=time, y=signal, labels={'x': 'Time / ns', 'y': 'Signal'})
+    fig.show()
     dt = time[1] - time[0]
-    power_spectrum = (abs(fft(signal))**2)
-    freq = fftfreq(len(signal), d=dt)
+    power_spectrum = (np.abs(fft(signal)))**2
+    power_spectrum = power_spectrum/max(power_spectrum)
+    freq = fftshift(fftfreq(len(signal), d=dt))
     return power_spectrum, freq
 
 def plot_powder_spectrum(signal):
     spectrum, freq = ft(signal)
     fig = px.line(x=freq, y=spectrum, labels={'x': 'Frequency / GHz', 'y': 'Intensity'})
-    fig.show()
+    # fig = px.line(x=np.arange(spectrum.shape[0]), y=spectrum, labels={'x': 'Frequency / GHz', 'y': 'Intensity'})
     return fig
 
 #%% Plot powder spectra
-
-powder_spectrum, freq = ft(powder_signals.sel(B=0))
-fig = px.line(x=freq, y=powder_spectrum/max(powder_spectrum), labels={'x': 'Frequency / GHz', 'y': 'Intensity'})
+fig = plot_powder_spectrum(powder_signals.sel(B=1).values)
+fig.update_yaxes(automargin=True)
 fig.show()
