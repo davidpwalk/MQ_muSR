@@ -101,7 +101,7 @@ awg_grid = [0.5, 2, 5, 10, 20, 50, 200, 500];
 tp_grid = [100, 250, 500, 1000, 2000, 4000];
 
 tic;
-for idx = 1:numel(awg_grid)
+for idx = 1:numel(tp_grid)
     options.awg.s_rate = awg_grid(idx);
     sequence.tp = tp_grid(idx);
 
@@ -344,6 +344,6 @@ fig = figure('NumberTitle','off','Name','Peak Pos difference');
 hold on
 plot(peak_positions(:, 1), peak_positions_diff)
 hold off
-filename = sprintf('Grid Search/results_awg%.2f.mat', awg_grid(idx));
+filename = sprintf('Grid Search/results_tp%.2f.mat', tp_grid(idx));
 save(filename, 'options', 'system', 'sequence', 'peak_positions', 'peak_positions_diff')
 end
