@@ -17,8 +17,8 @@ set_demonlab_style()
 pio.templates.default = "DemonLab"
 #%% Parameters and calculations of spin operators and tensors
 # Magnetic field range (in Tesla)
-# magnetic_fields = np.linspace(0, 10, 20)
-magnetic_fields = [1]
+magnetic_fields = np.linspace(0, 5, 100)
+# magnetic_fields = [1]
 
 # Zeeman (gamma / GHz/T)
 ge = 28.02495
@@ -31,8 +31,9 @@ D_parallel = 0.002
 D_perp = -D_parallel/2
 
 # Rotation angles (in degrees)
-thetas = np.radians(np.linspace(0, 90, 200, dtype=np.float64))
+# thetas = np.radians(np.linspace(0, 90, 200, dtype=np.float64))
 # thetas = np.radians([0, 45, 90, 180])
+thetas = [0]
 
 # Define the spin operators for S=1/2 and I=1/2
 S = 0.5
@@ -327,10 +328,69 @@ fig = time_signal(90, 0)
 fig.update_layout(xaxis_range=[0, 30])
 fig.show()
 
-for theta in [0, 45, 90]:
-    fig = stick_spectrum(theta, 1)
+fig = stick_spectrum(45, 1)
 fig.show()
+#%% Plot angular dependence of spectra at fixed B
+thetas = np.linspace(0, 90, 6)
+colors = px.colors.qualitative.G10[:len(thetas)]
 
+# Create a common figure
+fig = go.Figure()
+
+for theta, color in zip(thetas, colors):
+    subfig = stick_spectrum(theta, B=1)
+    for trace in subfig.data:
+        # Only modify style of the line traces
+        if trace.mode == "lines":
+            trace.line.color = color
+            trace.showlegend = False
+        else:
+            trace.marker.color = color
+            trace.name = f"{theta}°"
+        fig.add_trace(trace)
+
+fig.add_hline(y=0, line=dict(color="black"), opacity=1)
+
+fig.update_layout(
+    xaxis_title="Frequency / GHz",
+    yaxis_title="Amplitude",
+    title='Angular dependence of muSR spectrum at B = 1 T',
+    template="DemonLab",
+    legend=dict(y=0.5, x=1.02, xanchor="left", yanchor="middle"),
+)
+fig.show()
+# fig.write_html('../../Figures/ALC_simulations/TF_angular_dependence.html')
+
+#%% Plot angular dependence of time signals at fixed B
+magnetic_fields = np.linspace(0, 3, 6)
+colors = px.colors.qualitative.G10[:len(magnetic_fields)]
+
+# Create a common figure
+fig = go.Figure()
+
+for magnetic_field, color in zip(magnetic_fields, colors):
+    subfig = stick_spectrum(0, B=magnetic_field)
+    for trace in subfig.data:
+        # Only modify style of the line traces
+        if trace.mode == "lines":
+            trace.line.color = color
+            trace.showlegend = False
+        else:
+            trace.marker.color = color
+            trace.name = f"{magnetic_field:.1f} T"
+        fig.add_trace(trace)
+
+fig.add_hline(y=0, line=dict(color="black"), opacity=1)
+
+fig.update_layout(
+    xaxis_title="Frequency / GHz",
+    yaxis_title="Amplitude",
+    title='B dependence of muSR spectrum at θ = 0',
+    template="DemonLab",
+    legend=dict(y=0.5, x=1.02, xanchor="left", yanchor="middle"),
+)
+fig.show()
+# fig.write_html('../../Figures/ALC_simulations/TF_B_dependence.html')
 #%% Sum time-domain signals over angles
 # TODO: check impact of weighting and normalization
 # powder_signals = signals.sum(dim='theta')
