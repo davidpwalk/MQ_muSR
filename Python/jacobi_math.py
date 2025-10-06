@@ -1,10 +1,10 @@
 import numpy as np
 import random as rand
 
-def jacobi_diagonalize(sym_arr, offset_threshold=10**-6, record = lambda off,
+def jacobi_diagonalize(sym_arr, offset_threshold=10**-8, record = lambda off,
     cur_diag, cur_steps: None, start = lambda mat: None, stop = lambda res :
     None):
-      n =  len(sym_arr)
+      n = len(sym_arr)
       diagonal = sym_arr.astype(float).copy()
       steps = np.eye(n)
       off = offset(diagonal)
@@ -130,5 +130,5 @@ def offset(matr):
   for i in range(len(matr)):
     for j in range(len(matr)):
       if i != j:
-        res += matr[i][j] ** 2
+        res += abs(matr[i][j])
   return res

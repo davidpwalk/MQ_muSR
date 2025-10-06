@@ -7,7 +7,7 @@ save_all_data = false;
 
 % Zeeman (gamma / GHz/T)
 ge = 28.02495;
-gmu = -0.1355;
+gmu = 0.1355;
 
 % Coupling constants (in GHz) and rotation angles (in degree)
 A_iso = 0.5148;
@@ -37,7 +37,7 @@ options.labframe = 1;     % lab frame simulation is on
 % options.awg.s_rate = 500;  % can be switched on to improve accuracy (gives sampling rate of simulation in GHz)
 
 % sequence.tp=500.0;     % vector with event lengths in ns
-sequence.detection=ones(1,length(sequence.tp)); % detection always on
+% sequence.detection=ones(1,length(sequence.tp)); % detection always on
 
 %-- Generation of relevant matrices --%
 Sx = sop([1/2 1/2],'xe');
@@ -98,12 +98,14 @@ end
 
 % Grid for grid search
 awg_grid = [0.5, 2, 5, 10, 20, 50, 200, 500];
-tp_grid = [100, 250, 500, 1000, 2000, 4000];
+
+tp_grid = [500];
 
 tic;
 for idx = 1:numel(tp_grid)
-    options.awg.s_rate = awg_grid(idx);
+    options.awg.s_rate = 0.5;
     sequence.tp = tp_grid(idx);
+    sequence.detection=ones(1,length(sequence.tp)); % detection always on
 
     [experiment, options] = triple(sequence, options);  % build experiment to get experiment.tp
 
@@ -344,6 +346,6 @@ fig = figure('NumberTitle','off','Name','Peak Pos difference');
 hold on
 plot(peak_positions(:, 1), peak_positions_diff)
 hold off
-filename = sprintf('Grid Search/results_tp%.2f.mat', tp_grid(idx));
+filename = sprintf('Grid Search/results_tp%.2f_positive_gmu_negative_ge.mat', tp_grid(idx));
 save(filename, 'options', 'system', 'sequence', 'peak_positions', 'peak_positions_diff')
 end

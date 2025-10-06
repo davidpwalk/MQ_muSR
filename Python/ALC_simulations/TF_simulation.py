@@ -18,7 +18,7 @@ pio.templates.default = "DemonLab"
 #%% Parameters and calculations of spin operators and tensors
 # Magnetic field range (in Tesla)
 magnetic_fields = np.linspace(0, 5, 100)
-# magnetic_fields = [1]
+# magnetic_fields = [0]
 
 # Zeeman (gamma / GHz/T)
 ge = 28.02495
@@ -28,12 +28,13 @@ gmu = -0.1355
 # A_iso = 0.5148
 A_iso = 0.0
 D_parallel = 0.002
+# D_parallel = 0
 D_perp = -D_parallel/2
 
 # Rotation angles (in degrees)
-# thetas = np.radians(np.linspace(0, 90, 200, dtype=np.float64))
+thetas = np.radians(np.linspace(0, 90, 200, dtype=np.float64))
 # thetas = np.radians([0, 45, 90, 180])
-thetas = [0]
+# thetas = [0]
 
 # Define the spin operators for S=1/2 and I=1/2
 S = 0.5
@@ -53,23 +54,22 @@ T_principal = np.diag([D_perp, D_perp, D_parallel])
 
 
 # Rotation matrix
-# TODO: check if this is the right one to remain (is Ry or Rz?)
-def Rx(theta):
-    return np.array([[1,             0,              0],
-                     [0, np.cos(theta), -np.sin(theta)],
-                     [0, np.sin(theta),  np.cos(theta)]])
+def Ry(theta):
+    return np.array([[np.cos(theta),  0, np.sin(theta)],
+                     [0,              1,             0],
+                     [-np.sin(theta), 0, np.cos(theta)]])
 
 # Generate rotated tensors
 T_labs = []
 for theta in thetas:
-    R = Rx(theta)
+    R = Ry(theta)
     T_rot = R @ T_principal @ R.T
     T_labs.append(T_rot)
 
 #%% Simulation
 # Settings
 O = Ix  # observable
-threshold = 1e-6  # amplitude threshold for transitions
+threshold = 1e-4  # amplitude threshold for transitions
 transition_type_filter = None  # "SQE", "SQMu",  "ZQ", "DQ" or None for all
 
 
@@ -181,12 +181,14 @@ for ii, T_lab in enumerate(T_labs):
                 scalar = float(T_lab[a, b])
                 H_dip += scalar * (S_ops[a] * I_ops[b])
 
+        # H_dip_approx = D_parallel * Sz * Iz + D_perp * (Sx * Ix + Sy * Iy)
+
         H_tot = H_zeeman + H_iso + H_dip
 
         # Diagonalize the Hamiltonian using the Jacobi method (H_tot needs to be converted from Qobj to ndarray)
-        psi, energy_matrix, psi_t = jacobi_diagonalize(np.real(H_tot.full()))
+        psi, H_tot_eigen, psi_t = jacobi_diagonalize(np.real(H_tot.full()))
 
-        energies = energy_matrix.diagonal()
+        energies = H_tot_eigen.diagonal()
         energies_arr[ii, jj, :] = energies
 
         O_dense = O.full()
@@ -310,7 +312,7 @@ def stick_spectrum(theta, B, transition_type=None):
                 x=[freq], y=[amp],
                 mode="markers",
                 marker=dict(color="rgba(0,0,0,0)"),
-                name=f"{freq:.3f} GHz; {amp:.3f}, {ttype}",
+                name=f"{freq:.4f} GHz; {amp:.4f}, {ttype}",
             )
         )
 
@@ -324,12 +326,12 @@ def stick_spectrum(theta, B, transition_type=None):
     return fig
 
 #%% Plotting single spectra examples
-fig = time_signal(90, 0)
+fig = time_signal(0, 0)
 fig.update_layout(xaxis_range=[0, 30])
 fig.show()
 
-fig = stick_spectrum(45, 1)
-fig.show()
+fig = stick_spectrum(0, 0)
+fig.show(renderer='browser')
 #%% Plot angular dependence of spectra at fixed B
 thetas = np.linspace(0, 90, 6)
 colors = px.colors.qualitative.G10[:len(thetas)]
@@ -338,7 +340,7 @@ colors = px.colors.qualitative.G10[:len(thetas)]
 fig = go.Figure()
 
 for theta, color in zip(thetas, colors):
-    subfig = stick_spectrum(theta, B=1)
+    subfig = stick_spectrum(theta, B=0)
     for trace in subfig.data:
         # Only modify style of the line traces
         if trace.mode == "lines":
@@ -358,11 +360,11 @@ fig.update_layout(
     template="DemonLab",
     legend=dict(y=0.5, x=1.02, xanchor="left", yanchor="middle"),
 )
-fig.show()
+fig.show(renderer='browser')
 # fig.write_html('../../Figures/ALC_simulations/TF_angular_dependence.html')
 
-#%% Plot angular dependence of time signals at fixed B
-magnetic_fields = np.linspace(0, 3, 6)
+#%% Plot B dependence of spectra at fixed angle
+magnetic_fields = np.linspace(0, 1, 6)
 colors = px.colors.qualitative.G10[:len(magnetic_fields)]
 
 # Create a common figure
@@ -389,7 +391,7 @@ fig.update_layout(
     template="DemonLab",
     legend=dict(y=0.5, x=1.02, xanchor="left", yanchor="middle"),
 )
-fig.show()
+fig.show(renderer='browser')
 # fig.write_html('../../Figures/ALC_simulations/TF_B_dependence.html')
 #%% Sum time-domain signals over angles
 # TODO: check impact of weighting and normalization
@@ -398,7 +400,7 @@ fig.show()
 weights = np.sin(np.radians(signals.theta))
 powder_signals = (signals * weights).sum(dim='theta') / weights.sum()
 
-fig = px.line(x=powder_signals.sel(B=1).time, y=powder_signals.sel(B=1), labels={'x': 'Time / ns', 'y': 'Signal'})
+fig = px.line(x=powder_signals.sel(B=1, method='nearest').time, y=powder_signals.sel(B=1, method='nearest'), labels={'x': 'Time / ns', 'y': 'Signal'})
 fig.show()
 
 def apodize(signal):
@@ -430,6 +432,6 @@ def plot_powder_spectrum(signal):
     return fig
 
 #%% Plot powder spectra
-fig = plot_powder_spectrum(powder_signals.sel(B=1).values)
+fig = plot_powder_spectrum(powder_signals.sel(B=1, method='nearest').values)
 fig.update_yaxes(automargin=True)
 fig.show()
