@@ -68,7 +68,7 @@ for theta in thetas:
 
 #%% Simulation
 # Settings
-O = Ix  # observable
+O = Ix+Sx  # observable
 threshold = 1e-4  # amplitude threshold for transitions
 transition_type_filter = None  # "SQE", "SQMu",  "ZQ", "DQ" or None for all
 
@@ -207,7 +207,7 @@ for ii, T_lab in enumerate(T_labs):
                 amp = abs(O_eigen[kk, ll]) ** 2
                 ttype = classify_transition(ll + 1, kk + 1)
                 # print(f'ttype: {ttype}, kk: {kk+1}, ll: {ll+1}, amp: {amp}, O: \n{O_eigen}') if ttype == 'DQ' or ttype == 'ZQ' else None
-                print(f'theta: {np.degrees(thetas[ii])}, energies: {energies}, \n T_lab: {T_lab} \nO: \n{O_eigen}')
+                print(f'theta: {np.degrees(thetas[ii])}, energies: {energies}, \n T_lab: {T_lab} \nH_tot_eigen: \n{H_tot_eigen}')
                 if amp > threshold:
                     freqs.append(energies[ll] - energies[kk])
                     amps.append(amp)
@@ -225,7 +225,7 @@ for ii, T_lab in enumerate(T_labs):
         # build signal
         signal = np.zeros_like(time, dtype=float)
         for amp, freq in zip(amps, freqs):
-            signal += amp * np.cos(2 * np.pi * freq * time)
+            signal += amp * np.cos(2 * np.pi * abs(freq) * time)
 
         signals_arr[ii, jj, :] = signal
 
@@ -283,11 +283,11 @@ def time_signal(theta, B, transition_type=None):
 def stick_spectrum(theta, B, transition_type=None):
     if transition_type:
         mask = results['transition_types'].sel(theta=theta, B=B, method='nearest') == transition_type
-        freqs = results['frequencies'].sel(theta=theta, B=B, method='nearest').where(mask, drop=True).values
+        freqs = abs(results['frequencies'].sel(theta=theta, B=B, method='nearest').where(mask, drop=True).values)
         amps = results['amplitudes'].sel(theta=theta, B=B, method='nearest').where(mask, drop=True).values
         ttypes = results['transition_types'].sel(theta=theta, B=B, method='nearest').where(mask, drop=True).values
     else:
-        freqs = results['frequencies'].sel(theta=theta, B=B, method='nearest').values
+        freqs = abs(results['frequencies'].sel(theta=theta, B=B, method='nearest').values)
         amps = results['amplitudes'].sel(theta=theta, B=B, method='nearest').values
         ttypes = results['transition_types'].sel(theta=theta, B=B, method='nearest').values
 
@@ -295,16 +295,18 @@ def stick_spectrum(theta, B, transition_type=None):
     mask = np.isfinite(freqs) & np.isfinite(amps)
     freqs = freqs[mask]
     amps = amps[mask]
+    idx = 0
 
     fig = go.Figure()
     for freq, amp, ttype in zip(freqs, amps, ttypes):
+        color = px.colors.qualitative.G10[idx]
         fig.add_trace(
             go.Scatter(
                 x=[freq, freq],
                 y=[0, amp],
                 mode="lines",
-                line=dict(color="black"),
-                showlegend=False
+                name=f"{freq:.4f} GHz; {amp:.4f}, {ttype}",
+                line=dict(color=color),
             )
         )
         fig.add_trace(
@@ -312,9 +314,10 @@ def stick_spectrum(theta, B, transition_type=None):
                 x=[freq], y=[amp],
                 mode="markers",
                 marker=dict(color="rgba(0,0,0,0)"),
-                name=f"{freq:.4f} GHz; {amp:.4f}, {ttype}",
+                showlegend=False,
             )
         )
+        idx = idx + 1
 
     fig.add_hline(y=0, line=dict(color="black"), opacity=1)
 
@@ -328,11 +331,13 @@ def stick_spectrum(theta, B, transition_type=None):
 #%% Plotting single spectra examples
 fig = time_signal(0, 0)
 fig.update_layout(xaxis_range=[0, 30])
-fig.show()
+# fig.show()
 
 fig = stick_spectrum(0, 0)
-fig.show(renderer='browser')
+fig.update_layout(title='TF muSR spectrum at θ = 0°, B = 0 T, O = Sx + Ix')
+fig.show()
 #%% Plot angular dependence of spectra at fixed B
+B = 1  # Tesla
 thetas = np.linspace(0, 90, 6)
 colors = px.colors.qualitative.G10[:len(thetas)]
 
@@ -340,7 +345,7 @@ colors = px.colors.qualitative.G10[:len(thetas)]
 fig = go.Figure()
 
 for theta, color in zip(thetas, colors):
-    subfig = stick_spectrum(theta, B=0)
+    subfig = stick_spectrum(theta, B=B)
     for trace in subfig.data:
         # Only modify style of the line traces
         if trace.mode == "lines":
@@ -356,7 +361,7 @@ fig.add_hline(y=0, line=dict(color="black"), opacity=1)
 fig.update_layout(
     xaxis_title="Frequency / GHz",
     yaxis_title="Amplitude",
-    title='Angular dependence of muSR spectrum at B = 1 T',
+    title=f'Angular dependence of muSR spectrum at B = {B} T',
     template="DemonLab",
     legend=dict(y=0.5, x=1.02, xanchor="left", yanchor="middle"),
 )
@@ -400,7 +405,8 @@ fig.show(renderer='browser')
 weights = np.sin(np.radians(signals.theta))
 powder_signals = (signals * weights).sum(dim='theta') / weights.sum()
 
-fig = px.line(x=powder_signals.sel(B=1, method='nearest').time, y=powder_signals.sel(B=1, method='nearest'), labels={'x': 'Time / ns', 'y': 'Signal'})
+fig = px.line(x=powder_signals.sel(B=1, method='nearest').time, y=powder_signals.sel(B=1, method='nearest'), labels={'x': 'Time / ns',
+                                                                                                                     'y': 'Signal'})
 fig.show()
 
 def apodize(signal):
@@ -432,6 +438,9 @@ def plot_powder_spectrum(signal):
     return fig
 
 #%% Plot powder spectra
-fig = plot_powder_spectrum(powder_signals.sel(B=1, method='nearest').values)
+B = 0.05  # Tesla
+fig = plot_powder_spectrum(powder_signals.sel(B=B, method='nearest').values)
 fig.update_yaxes(automargin=True)
+fig.update_layout(title=f'Powder muSR spectrum at B = {B} T, O = Ix + Sx')
 fig.show()
+fig.write_html(f'../../Figures/ALC_simulations/TF_powder_spectrum_thin_pake_pattern_{B}T_Ix_Sx.html')

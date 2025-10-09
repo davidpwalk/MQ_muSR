@@ -15,7 +15,6 @@ D_parallel = 0.002;
 D_perpen = -D_parallel/2;
 
 thetas = deg2rad(linspace(0, 90, 200));
-thetas = thetas (85:105);
 phis = deg2rad([0]); % Phi has no impact on the spectra
 
 % Range of B0
@@ -29,15 +28,19 @@ system.interactions = {};
 system.init_state='ez'; % LF mode (muon in the Iz eigenstate)
 system.eq = 'init';  % equilibrium state is the same as initial state
 
+% Add relaxation
+system.T1 = 2200;  % 2.2 us
+system.T2 = 1e10;  % 10 s 
+
 % Set options
-options.relaxation=0;       % tells SPIDYAN whether to include relaxation (1) or not (0)
+options.relaxation=1;       % tells SPIDYAN whether to include relaxation (1) or not (0)
 options.down_conversion=0;  % downconversion of signal (1) or not (0)
 options.det_op={'ez', 'ex'};
-options.labframe = 1;     % lab frame simulation is on
-% options.awg.s_rate = 500;  % can be switched on to improve accuracy (gives sampling rate of simulation in GHz)
+options.labframe = 1;       % lab frame simulation is on
+options.awg.s_rate = 0.5;   % gives sampling rate of simulation in GHz
 
-% sequence.tp=500.0;     % vector with event lengths in ns
-% sequence.detection=ones(1,length(sequence.tp)); % detection always on
+sequence.tp=500.0;     % vector with event lengths in ns
+sequence.detection=ones(1,length(sequence.tp)); % detection always on
 
 %-- Generation of relevant matrices --%
 Sx = sop([1/2 1/2],'xe');
@@ -82,100 +85,83 @@ for n = 1:length(thetas)
 end
 
 %% Simulation
-% [experiment, options] = triple(sequence, options);  % build experiment to get experiment.tp
-% 
-% % Preallocate: one cell per orientation. Each cell holds a matrix: (#det_ops) x Nfields
-% Nfields = numel(magnetic_fields);
-% Nt = experiment.tp/experiment.dt + 1;
-% 
-% eigenvalues = cell(1, Norient);
-% spectra = zeros(Norient, numel(options.det_op), Nfields);
+[experiment, options] = triple(sequence, options);  % build experiment to get experiment.tp
+
+% Preallocate: one cell per orientation. Each cell holds a matrix: (#det_ops) x Nfields
+Nfields = numel(magnetic_fields);
+Nt = experiment.tp/experiment.dt + 1;
+
+eigenvalues = cell(1, Norient);
+spectra = zeros(Norient, numel(options.det_op), Nfields);
 
 if save_all_data
     signals = cell(1, Norient);
     allsignals = cell(Norient, Nfields);     % only if you need full detected_signal per field
 end
 
-% Grid for grid search
-awg_grid = [0.5, 2, 5, 10, 20, 50, 200, 500];
-
-tp_grid = [500];
-
 tic;
-for idx = 1:numel(tp_grid)
-    options.awg.s_rate = 0.5;
-    sequence.tp = tp_grid(idx);
-    sequence.detection=ones(1,length(sequence.tp)); % detection always on
 
-    [experiment, options] = triple(sequence, options);  % build experiment to get experiment.tp
+for k = 1:Norient
+    T_lab = T_labs{k};
+    temp_eigenvalues = zeros(4, Nfields);
+    temp_integrals = zeros(numel(options.det_op), Nfields);
 
-    % Preallocate: one cell per orientation. Each cell holds a matrix: (#det_ops) x Nfields
-    Nfields = numel(magnetic_fields);
-    Nt = experiment.tp/experiment.dt + 1;
-    
-    eigenvalues = cell(1, Norient);
-    spectra = zeros(Norient, numel(options.det_op), Nfields);
-    for k = 1:Norient
-        T_lab = T_labs{k};
-        temp_eigenvalues = zeros(4, Nfields);
-        temp_integrals = zeros(numel(options.det_op), Nfields);
-    
-        if save_all_data
-            temp_signal = zeros(length(options.det_op), Nt, Nfields);
-            temp_allsignals = cell(1, Nfields);
-        end
-    
-        parfor n = 1:Nfields
-            temp_nu_muon = gmu * magnetic_fields(n);
-            temp_nu_electron = ge * magnetic_fields(n);
-    
-            temp_system = system;  % copy
-            temp_system.interactions = { ...
-                1,0,'z','e', temp_nu_electron; ...
-                2,0,'z','e', temp_nu_muon; ...
-            };
-    
-            [temp_experiment, temp_options] = triple(sequence, options);
-            [temp_system, temp_state, temp_options] = setup(temp_system, temp_options);
-    
-            % Isotropic dipolar Hamiltonian
-            A_iso_matrix = diag([A_iso, A_iso, A_iso]);
-            H_iso = Sx*A_iso_matrix(1, 1)*Ix + Sy*A_iso_matrix(2, 2)*Iy + Sz*A_iso_matrix(3, 3)*Iz;
-    
-            % Dipolar Hamiltonian in lab frame
-            H_dip = Sx*T_lab(1,1)*Ix + Sx*T_lab(1,2)*Iy + Sx*T_lab(1,3)*Iz + ...
-                    Sy*T_lab(2,1)*Ix + Sy*T_lab(2,2)*Iy + Sy*T_lab(2,3)*Iz + ...
-                    Sz*T_lab(3,1)*Ix + Sz*T_lab(3,2)*Iy + Sz*T_lab(3,3)*Iz;
-    
-            % disp(H_dip)
-            % disp('before')
-            % disp(temp_system.ham)
-    
-            temp_system.ham = temp_system.ham + 2*pi*(H_dip + H_iso);
-            
-            % disp('By hand')
-            % disp(temp_system.ham)
-    
-            temp_eigenvalues(:, n) = eig(temp_system.ham);
-    
-            [temp_state, detected_signal, ~] = homerun(temp_state, temp_system, temp_experiment, temp_options, []);
-    
-            if save_all_data
-                temp_signal(:, :, n) = detected_signal.sf;
-                temp_allsignals{n} = detected_signal;
-            end
-    
-            temp_integrals(:,n) = mean(real(detected_signal.sf), 2);
-        end
-        
-        eigenvalues{k} = temp_eigenvalues;
-        spectra(k,:,:) = temp_integrals;
-    
-        if save_all_data
-            signals{k} = temp_signal;
-            allsignals(k,:) = temp_allsignals; 
-        end
+    if save_all_data
+        temp_signal = zeros(length(options.det_op), Nt, Nfields);
+        temp_allsignals = cell(1, Nfields);
     end
+
+    parfor n = 1:Nfields
+        temp_nu_muon = gmu * magnetic_fields(n);
+        temp_nu_electron = ge * magnetic_fields(n);
+
+        temp_system = system;  % copy
+        temp_system.interactions = { ...
+            1,0,'z','e', temp_nu_electron; ...
+            2,0,'z','e', temp_nu_muon; ...
+        };
+
+        [temp_experiment, temp_options] = triple(sequence, options);
+        [temp_system, temp_state, temp_options] = setup(temp_system, temp_options);
+
+        % Isotropic dipolar Hamiltonian
+        A_iso_matrix = diag([A_iso, A_iso, A_iso]);
+        H_iso = Sx*A_iso_matrix(1, 1)*Ix + Sy*A_iso_matrix(2, 2)*Iy + Sz*A_iso_matrix(3, 3)*Iz;
+
+        % Dipolar Hamiltonian in lab frame
+        H_dip = Sx*T_lab(1,1)*Ix + Sx*T_lab(1,2)*Iy + Sx*T_lab(1,3)*Iz + ...
+                Sy*T_lab(2,1)*Ix + Sy*T_lab(2,2)*Iy + Sy*T_lab(2,3)*Iz + ...
+                Sz*T_lab(3,1)*Ix + Sz*T_lab(3,2)*Iy + Sz*T_lab(3,3)*Iz;
+
+        % disp(H_dip)
+        % disp('before')
+        % disp(temp_system.ham)
+
+        temp_system.ham = temp_system.ham + 2*pi*(H_dip + H_iso);
+        
+        % disp('By hand')
+        % disp(temp_system.ham)
+
+        temp_eigenvalues(:, n) = eig(temp_system.ham);
+
+        [temp_state, detected_signal, ~] = homerun(temp_state, temp_system, temp_experiment, temp_options, []);
+
+        if save_all_data
+            temp_signal(:, :, n) = detected_signal.sf;
+            temp_allsignals{n} = detected_signal;
+        end
+
+        temp_integrals(:,n) = mean(real(detected_signal.sf), 2);
+    end
+    
+    eigenvalues{k} = temp_eigenvalues;
+    spectra(k,:,:) = temp_integrals;
+
+    if save_all_data
+        signals{k} = temp_signal;
+        allsignals(k,:) = temp_allsignals; 
+    end
+end
 
 toc;
 
@@ -346,6 +332,5 @@ fig = figure('NumberTitle','off','Name','Peak Pos difference');
 hold on
 plot(peak_positions(:, 1), peak_positions_diff)
 hold off
-filename = sprintf('Grid Search/results_tp%.2f_positive_gmu_negative_ge.mat', tp_grid(idx));
-save(filename, 'options', 'system', 'sequence', 'peak_positions', 'peak_positions_diff')
-end
+filename = sprintf('results_all_thetas_awg%.2f_tp%.2f.mat', options.awg.s_rate, sequence.tp);
+% save(filename, 'options', 'system', 'sequence', 'peak_positions', 'peak_positions_diff')
