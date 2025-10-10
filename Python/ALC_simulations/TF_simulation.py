@@ -68,12 +68,12 @@ for theta in thetas:
 
 #%% Simulation
 # Settings
-O = Sx  # observable
+O = Ix  # observable
 threshold = 1e-4  # amplitude threshold for transitions
-transition_type_filter = None  # "SQE", "SQMu", "ZQ", "DQ" or None for all
+# TODO: change filter to so all signals are saved and filter only at plotting stage
 
 
-time = np.linspace(0, 8000, 16000)
+time = np.linspace(0, 8000, 32000)
 n_theta = len(thetas)
 n_B = len(magnetic_fields)
 n_time = len(time)
@@ -86,7 +86,9 @@ frequencies_arr = np.full((n_theta, n_B, max_transitions), np.nan)
 amplitudes_arr = np.full((n_theta, n_B, max_transitions), np.nan)
 ttypes_arr = np.full((n_theta, n_B, max_transitions), None, dtype=object)
 
-signals_arr = np.zeros((n_theta, n_B, n_time))
+transition_types = ["SQMu", "SQE", "ZQ", "DQ"]
+
+signals_arr = np.zeros((len(transition_types), n_theta, n_B, n_time))
 
 def classify_transition(i, j):
     pair = {i, j}
@@ -99,8 +101,6 @@ def classify_transition(i, j):
     elif pair == {1, 3} or pair == {3, 4}:
         return "SQMu"
 
-
-import numpy as np
 
 def merge_transitions(freqs, amps, types, tol=1e-8, zero_tol=1e-12):
     """
@@ -168,6 +168,7 @@ def merge_transitions(freqs, amps, types, tol=1e-8, zero_tol=1e-12):
     return merged_freqs, merged_amps, merged_types
 
 
+# TODO: fix error where merging transitions leads to error in signal calculation
 for ii, T_lab in enumerate(T_labs):
     for jj, magnetic_field in enumerate(magnetic_fields):
         nu_muon = gmu * magnetic_field
@@ -196,14 +197,9 @@ for ii, T_lab in enumerate(T_labs):
 
         freqs = []
         amps = []
-        types = []
+        ttypes = []
         for kk in range(len(energies)):
             for ll in range(kk + 1, len(energies)):
-                if transition_type_filter:
-                    ttype = classify_transition(ll + 1, kk + 1)
-                    if ttype != transition_type_filter:
-                        continue
-
                 amp = abs(O_eigen[kk, ll]) ** 2
                 ttype = classify_transition(ll + 1, kk + 1)
                 # print(f'ttype: {ttype}, kk: {kk+1}, ll: {ll+1}, amp: {amp}, O: \n{O_eigen}') if ttype == 'DQ' or ttype == 'ZQ' else None
@@ -212,51 +208,58 @@ for ii, T_lab in enumerate(T_labs):
                     freqs.append(energies[ll] - energies[kk])
                     amps.append(amp)
                     ttype = classify_transition(ll + 1, kk + 1)
-                    types.append(ttype)
+                    ttypes.append(ttype)
 
         # store frequencies/amplitudes (pad with NaN if fewer than max_transitions)
-        freqs, amps, types = merge_transitions(freqs, amps, types)
-        print(f'freqs: {freqs}, amps: {amps}, types: {types}')
+        freqs, amps, ttypes = merge_transitions(freqs, amps, ttypes)
+        print(f'freqs: {freqs}, amps: {amps}, types: {ttypes}')
         n_trans = len(freqs)
         frequencies_arr[ii, jj, :n_trans] = freqs
         amplitudes_arr[ii, jj, :n_trans] = amps
-        ttypes_arr[ii, jj, :n_trans] = types
+        ttypes_arr[ii, jj, :n_trans] = ttypes
 
         # build signal
-        signal = np.zeros_like(time, dtype=float)
-        for amp, freq in zip(amps, freqs):
-            signal += amp * np.cos(2 * np.pi * abs(freq) * time)
+        signal_SQMu = np.zeros_like(time, dtype=float)
+        signal_SQE = np.zeros_like(time, dtype=float)
+        signal_ZQ = np.zeros_like(time, dtype=float)
+        signal_DQ = np.zeros_like(time, dtype=float)
 
-        signals_arr[ii, jj, :] = signal
+        for amp, freq, ttype in zip(amps, freqs, ttypes):
+            if ttype == "SQMu":
+                signal_SQMu += amp * np.cos(2 * np.pi * abs(freq) * time)
+            elif ttype == "SQE":
+                signal_SQE += amp * np.cos(2 * np.pi * abs(freq) * time)
+            elif ttype == "ZQ":
+                signal_ZQ += amp * np.cos(2 * np.pi * abs(freq) * time)
+            elif ttype == "DQ":
+                signal_DQ += amp * np.cos(2 * np.pi * abs(freq) * time)
+            else:
+                raise ValueError(f"Unknown transition type: {ttype}")
+
+        type_to_index = {t: i for i, t in enumerate(transition_types)}
+
+        for amp, freq, ttype in zip(amps, freqs, ttypes):
+            idx = type_to_index[ttype]
+            signals_arr[idx, ii, jj, :] += amp * np.cos(2 * np.pi * abs(freq) * time)
 
 # Wrap into Dataset
 results = xr.Dataset(
     {
-        "signal": (["theta", "B", "time"], signals_arr),
+        "signal": (["transition_type", "theta", "B", "time"], signals_arr),
         "energies": (["theta", "B", "level"], energies_arr),
         "frequencies": (["theta", "B", "transition"], frequencies_arr),
         "amplitudes": (["theta", "B", "transition"], amplitudes_arr),
         "transition_types": (["theta", "B", "transition"], ttypes_arr),
     },
     coords={
+        "transition_type": transition_types,
         "theta": np.degrees(thetas),
         "B": magnetic_fields,
         "time": time,
         "level": np.arange(4),
         "transition": np.arange(max_transitions),
-        "transition_type": ["SQE", "SQMu", "ZQ", "DQ"],
     }
 )
-
-signals = xr.DataArray(
-    signals_arr,
-    dims=["theta", "B", "time"],
-    coords={
-        "theta": np.degrees(thetas),
-        "B": magnetic_fields,
-        "time": time,
-    },
-    name="signal")
 
 #%% Plotting functions for single spectra
 def time_signal(theta, B, transition_type=None):
@@ -330,10 +333,8 @@ def stick_spectrum(theta, B, transition_type=None):
     )
     return fig
 
-
-
 #%% Plotting single spectra examples
-B = 0.01  # Tesla
+B = 1  # Tesla
 theta = 45  # degrees
 fig = time_signal(theta, B)
 fig.update_layout(xaxis_range=[0, 30])
@@ -408,8 +409,24 @@ fig.show(renderer='browser')
 # TODO: check impact of weighting and normalization
 # powder_signals = signals.sum(dim='theta')
 
-weights = np.sin(np.radians(signals.theta))
-powder_signals = (signals * weights).sum(dim='theta') / weights.sum()
+def calc_powder_signal(results, transition_types=None):
+    if transition_types:
+        signals = np.zeros_like(results['signal'])
+        for transition_type in transition_types:
+            if transition_type not in results['transition_type'].values:
+                raise ValueError(f"Transition type '{transition_type}' not found in results.")
+            else:
+                signals += results['signal'].sel(transition_type=transition_type)
+        signals = results['signal'].sel(transition_type=transition_type)
+    else:
+        signals = results['signal'].sum(dim='transition_type')
+
+    weights = np.sin(np.radians(results.theta))
+    powder_signals = (signals * weights).sum(dim='theta') / weights.sum()
+    return powder_signals
+
+
+powder_signals = calc_powder_signal(results, transition_types=None)
 
 fig = px.line(x=powder_signals.sel(B=1, method='nearest').time, y=powder_signals.sel(B=1, method='nearest'), labels={'x': 'Time / ns',
                                                                                                                      'y': 'Signal'})
@@ -433,7 +450,7 @@ def ft(signal):
     fig.show()
     dt = time[1] - time[0]
     power_spectrum = (np.abs(fft(signal)))**2
-    power_spectrum = power_spectrum/max(power_spectrum)
+    power_spectrum = fftshift(power_spectrum/max(power_spectrum))
     freq = fftshift(fftfreq(len(signal), d=dt))
     return power_spectrum, freq
 
@@ -441,12 +458,12 @@ def plot_powder_spectrum(signal):
     spectrum, freq = ft(signal)
     fig = px.line(x=freq, y=spectrum, labels={'x': 'Frequency / GHz', 'y': 'Intensity'})
     # fig = px.line(x=np.arange(spectrum.shape[0]), y=spectrum, labels={'x': 'Frequency / GHz', 'y': 'Intensity'})
-    return fig
+    return fig, freq
 
 #%% Plot powder spectra
 B = 1  # Tesla
-fig = plot_powder_spectrum(powder_signals.sel(B=B, method='nearest').values)
+fig, freq = plot_powder_spectrum(powder_signals.sel(B=B, method='nearest').values)
 fig.update_yaxes(automargin=True)
-fig.update_layout(title=f'Powder muSR spectrum at B = {B} T, O = Ix + Sx')
+fig.update_layout(title=f'Powder muSR spectrum at B = {B} T, O = Ix')
 fig.show()
 # fig.write_html(f'../../Figures/ALC_simulations/TF_powder_spectrum_thin_pake_pattern_{B}T_Ix_Sx.html')

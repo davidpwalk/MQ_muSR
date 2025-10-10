@@ -7,7 +7,7 @@ save_all_data = false;
 
 % Zeeman (gamma / GHz/T)
 ge = 28.02495;
-gmu = 0.1355;
+gmu = -0.1355;
 
 % Coupling constants (in GHz) and rotation angles (in degree)
 A_iso = 0.5148;
@@ -33,7 +33,7 @@ system.T1 = 2200;  % 2.2 us
 system.T2 = 1e10;  % 10 s 
 
 % Set options
-options.relaxation=1;       % tells SPIDYAN whether to include relaxation (1) or not (0)
+options.relaxation=0;       % tells SPIDYAN whether to include relaxation (1) or not (0)
 options.down_conversion=0;  % downconversion of signal (1) or not (0)
 options.det_op={'ez', 'ex'};
 options.labframe = 1;       % lab frame simulation is on
