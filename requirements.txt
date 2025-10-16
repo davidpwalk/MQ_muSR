@@ -11,6 +11,7 @@ scipy
 
 # For advanced data handling
 xarray
+netCDF4
 
 # For better workflow with Git and jupyter nbs
 notebook

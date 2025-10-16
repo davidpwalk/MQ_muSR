@@ -7,7 +7,8 @@ import plotly.graph_objects as go
 import plotly.io as pio
 import qutip as qt
 import xarray as xr
-from scipy.fft import fft, fftfreq, fftshift
+import os
+import warnings
 
 from Python.jacobi_math import jacobi_diagonalize
 
@@ -15,10 +16,20 @@ from Python.jacobi_math import jacobi_diagonalize
 from Python.plot_settings import set_demonlab_style
 set_demonlab_style()
 pio.templates.default = "DemonLab"
+
+# Import utility functions
+from Python.ALC_simulations.utils import *
+
+#%% Function definitions
+
 #%% Parameters and calculations of spin operators and tensors
+# Filename and description for saving results (set filename to None to skip saving)
+filename = 'Python/ALC_simulations/Data/test2.nc'
+desc = 'TF muSR simulation for S=1/2, I=1/2 system with anisotropic dipolar coupling, O=Ix'
+
 # Magnetic field range (in Tesla)
 magnetic_fields = np.linspace(0, 0.5, 100)
-# magnetic_fields = [0]
+magnetic_fields = [0]
 
 # Zeeman (gamma / GHz/T)
 ge = 28.02495
@@ -34,7 +45,7 @@ D_perp = -D_parallel/2
 # Rotation angles (in degrees)
 thetas = np.radians(np.linspace(0, 90, 200, dtype=np.float64))
 # thetas = np.radians([0, 45, 90, 180])
-# thetas = [0]
+thetas = [0]
 
 # Define the spin operators for S=1/2 and I=1/2
 S = 0.5
@@ -69,6 +80,7 @@ for theta in thetas:
 #%% Simulation
 # Settings
 O = Ix  # observable
+O_string = 'Ix'
 threshold = 1e-4  # amplitude threshold for transitions
 # TODO: change filter to so all signals are saved and filter only at plotting stage
 
@@ -89,84 +101,6 @@ ttypes_arr = np.full((n_theta, n_B, max_transitions), None, dtype=object)
 transition_types = ["SQMu", "SQE", "ZQ", "DQ"]
 
 signals_arr = np.zeros((len(transition_types), n_theta, n_B, n_time))
-
-def classify_transition(i, j):
-    pair = {i, j}
-    if pair == {1, 4}:
-        return "DQ"
-    elif pair == {2, 3}:
-        return "ZQ"
-    elif pair == {1, 2} or pair == {2, 4}:
-        return "SQE"
-    elif pair == {1, 3} or pair == {3, 4}:
-        return "SQMu"
-
-
-def merge_transitions(freqs, amps, types, tol=1e-8, zero_tol=1e-12):
-    """
-    Merge transitions whose frequencies are pairwise within `tol` (single-linkage / connected components).
-    - freqs, amps, types: sequences (will be converted to numpy arrays)
-    - tol: absolute frequency tolerance for linking two transitions
-    - zero_tol: if set, snap |freq| <= zero_tol to 0 before clustering (useful for near-zero symmetric pairs)
-    Returns: (merged_freqs, merged_amps, merged_types) as Python lists (sorted by frequency).
-    """
-    freqs = np.asarray(freqs, dtype=float)
-    amps = np.asarray(amps, dtype=float)
-    types = np.asarray(types, dtype=object)
-
-    if freqs.size == 0:
-        return [], [], []
-
-    # optional: snap tiny frequencies to zero
-    if zero_tol is not None:
-        small = np.abs(freqs) <= zero_tol
-        freqs[small] = 0.0
-
-    # adjacency: True where pairwise difference <= tol
-    adj = np.abs(freqs[:, None] - freqs[None, :]) <= tol
-
-    # find connected components (DFS)
-    n = len(freqs)
-    visited = np.zeros(n, dtype=bool)
-    groups = []
-    for i in range(n):
-        if visited[i]:
-            continue
-        stack = [i]
-        comp = []
-        visited[i] = True
-        while stack:
-            v = stack.pop()
-            comp.append(v)
-            neighbors = np.where(adj[v] & ~visited)[0]
-            for w in neighbors:
-                visited[w] = True
-                stack.append(w)
-        groups.append(comp)
-
-    # merge each component: amplitude sum, frequency = amplitude-weighted mean (fallback to simple mean)
-    merged_freqs = []
-    merged_amps = []
-    merged_types = []
-    for comp in groups:
-        idx = np.array(comp)
-        total_amp = amps[idx].sum()
-        if total_amp > 0:
-            freq_rep = (freqs[idx] * amps[idx]).sum() / total_amp
-        else:
-            freq_rep = freqs[idx].mean()
-        merged_freqs.append(freq_rep)
-        merged_amps.append(total_amp)
-        merged_types.append(",".join(sorted(set(types[idx].tolist()))))
-
-    # sort by frequency before returning
-    order = np.argsort(merged_freqs)
-    merged_freqs = np.array(merged_freqs)[order].tolist()
-    merged_amps  = np.array(merged_amps)[order].tolist()
-    merged_types = np.array(merged_types, dtype=object)[order].tolist()
-
-    return merged_freqs, merged_amps, merged_types
-
 
 # TODO: fix error where merging transitions leads to error in signal calculation
 for ii, T_lab in enumerate(T_labs):
@@ -211,7 +145,7 @@ for ii, T_lab in enumerate(T_labs):
                     ttypes.append(ttype)
 
         # store frequencies/amplitudes (pad with NaN if fewer than max_transitions)
-        freqs, amps, ttypes = merge_transitions(freqs, amps, ttypes)
+        # freqs, amps, ttypes = merge_transitions(freqs, amps, ttypes)
         print(f'freqs: {freqs}, amps: {amps}, types: {ttypes}')
         n_trans = len(freqs)
         frequencies_arr[ii, jj, :n_trans] = freqs
@@ -261,79 +195,26 @@ results = xr.Dataset(
     }
 )
 
-#%% Plotting functions for single spectra
-def time_signal(theta, B, transition_type=None):
-    if transition_type:
-        mask = results['transition_types'].sel(theta=theta, B=B, method='nearest') == transition_type
-        freqs = results['frequencies'].sel(theta=theta, B=B, method='nearest').where(mask, drop=True).values
-        amps = results['amplitudes'].sel(theta=theta, B=B, method='nearest').where(mask, drop=True).values
+# TODO: find a smoother solution for saving the data as this can lead to HUGE files if multiple angles and fields are simulated
+# Attach simulation parameters as metadata
+results.attrs.update({
+    "description": desc,
+    "A_iso_GHz": A_iso,
+    "D_parallel_GHz": D_parallel,
+    "D_perp_GHz": D_perp,
+    "ge_GHz_per_T": ge,
+    "gmu_GHz_per_T": gmu,
+    "observable": O_string,
+})
+
+if filename:
+    if os.path.exists(filename):
+        warnings.warn(f"File '{filename}' already exists. Results not overwritten.", UserWarning)
     else:
-        freqs = results['frequencies'].sel(theta=theta, B=B, method='nearest').values
-        amps = results['amplitudes'].sel(theta=theta, B=B, method='nearest').values
+        results.to_netcdf(filename, engine='netcdf4')
+        print(f"Results successfully saved to '{filename}'.")
 
-    # remove NaN padding
-    mask = np.isfinite(freqs) & np.isfinite(amps)
-    freqs = freqs[mask]
-    amps = amps[mask]
-
-    signal = np.zeros_like(time, dtype=float)
-    for amp, freq in zip(amps, freqs):
-        signal += amp * np.cos(2 * np.pi * freq * time)
-
-    fig = px.line(x=time, y=signal, labels={'x': 'Time / ns', 'y': 'Signal'})
-    return fig
-
-def stick_spectrum(theta, B, transition_type=None):
-    sel_freqs = results['frequencies'].sel(theta=theta, B=B, method='nearest')
-    sel_amps = results['amplitudes'].sel(theta=theta, B=B, method='nearest')
-    sel_types = results['transition_types'].sel(theta=theta, B=B, method='nearest')
-
-    # Handle one or multiple transition types
-    if transition_type is not None:
-        if isinstance(transition_type, (list, tuple, set)):
-            mask = xr.DataArray(
-                np.isin(sel_types.values, list(transition_type)),
-                dims=sel_types.dims,
-                coords=sel_types.coords
-            )
-        else:
-            mask = sel_types == transition_type
-
-        freqs = abs(sel_freqs.where(mask, drop=True).values)
-        amps = sel_amps.where(mask, drop=True).values
-        ttypes = sel_types.where(mask, drop=True).values
-    else:
-        freqs = abs(sel_freqs.values)
-        amps = sel_amps.values
-        ttypes = sel_types.values
-
-    # Remove NaN padding
-    mask = np.isfinite(freqs) & np.isfinite(amps)
-    freqs, amps, ttypes = freqs[mask], amps[mask], ttypes[mask]
-
-    fig = go.Figure()
-    color_cycle = px.colors.qualitative.G10
-    for idx, (freq, amp, ttype) in enumerate(zip(freqs, amps, ttypes)):
-        color = color_cycle[idx % len(color_cycle)]
-        fig.add_trace(
-            go.Scatter(
-                x=[freq, freq],
-                y=[0, amp],
-                mode="lines",
-                name=f"{freq:.4f} GHz; {amp:.4f}, {ttype}",
-                line=dict(color=color),
-            )
-        )
-
-    fig.add_hline(y=0, line=dict(color="black"), opacity=1)
-    fig.update_layout(
-        xaxis_title="Frequency / GHz",
-        yaxis_title="Amplitude",
-        template="DemonLab"
-    )
-    return fig
-
-#%% Plotting single spectra examples
+#%% Plotting single spectra
 B = 1  # Tesla
 theta = 45  # degrees
 fig = time_signal(theta, B)
@@ -409,56 +290,11 @@ fig.show(renderer='browser')
 # TODO: check impact of weighting and normalization
 # powder_signals = signals.sum(dim='theta')
 
-def calc_powder_signal(results, transition_types=None):
-    if transition_types:
-        signals = np.zeros_like(results['signal'])
-        for transition_type in transition_types:
-            if transition_type not in results['transition_type'].values:
-                raise ValueError(f"Transition type '{transition_type}' not found in results.")
-            else:
-                signals += results['signal'].sel(transition_type=transition_type)
-        signals = results['signal'].sel(transition_type=transition_type)
-    else:
-        signals = results['signal'].sum(dim='transition_type')
-
-    weights = np.sin(np.radians(results.theta))
-    powder_signals = (signals * weights).sum(dim='theta') / weights.sum()
-    return powder_signals
-
-
 powder_signals = calc_powder_signal(results, transition_types=None)
 
 fig = px.line(x=powder_signals.sel(B=1, method='nearest').time, y=powder_signals.sel(B=1, method='nearest'), labels={'x': 'Time / ns',
                                                                                                                      'y': 'Signal'})
 fig.show()
-
-def apodize(signal):
-    n = len(signal)
-    dt = time[1] - time[0]
-    window = np.hanning(2*n)[n:]
-    apodized_signal = signal * window
-
-    n_fft = 1 << (n - 1).bit_length()  # next power of 2
-    padded = np.zeros(n_fft)
-    padded[:n] = apodized_signal
-    time_padded = np.arange(n_fft) * dt
-    return padded, time_padded
-
-def ft(signal):
-    signal, time = apodize(signal)
-    fig = px.line(x=time, y=signal, labels={'x': 'Time / ns', 'y': 'Signal'})
-    fig.show()
-    dt = time[1] - time[0]
-    power_spectrum = (np.abs(fft(signal)))**2
-    power_spectrum = fftshift(power_spectrum/max(power_spectrum))
-    freq = fftshift(fftfreq(len(signal), d=dt))
-    return power_spectrum, freq
-
-def plot_powder_spectrum(signal):
-    spectrum, freq = ft(signal)
-    fig = px.line(x=freq, y=spectrum, labels={'x': 'Frequency / GHz', 'y': 'Intensity'})
-    # fig = px.line(x=np.arange(spectrum.shape[0]), y=spectrum, labels={'x': 'Frequency / GHz', 'y': 'Intensity'})
-    return fig, freq
 
 #%% Plot powder spectra
 B = 1  # Tesla
