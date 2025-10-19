@@ -22,8 +22,9 @@ from Python.ALC_simulations.utils import *
 
 #%% Parameters and calculations of spin operators and tensors
 # Filename and description for saving results (set filename to None to skip saving)
-filename = 'Python/ALC_simulations/Data/TF_EPR_dipolar_cc.nc'
-desc = 'TF EPR simulation for S=1/2, I=1/2 system with anisotropic dipolar coupling of D_parallel=2 MHz, O=Sx'
+filename = 'Python/ALC_simulations/Data/TF_NMR_isotropic_cc.nc'
+# filename = None
+desc = 'TF NMR simulation for S=1/2, I=1/2 system with isotropic hyperfine coupling of A_iso=2 MHz, O=Ix'
 
 # Magnetic field range (in Tesla)
 magnetic_fields = np.linspace(0, 0.5, 100)
@@ -35,9 +36,10 @@ gmu = -0.1355
 
 # Coupling constants (in GHz) and rotation angle (in degrees)
 # A_iso = 0.5148
-A_iso = 0.0
-D_parallel = 0.002
-# D_parallel = 0
+# A_iso = 0.0
+A_iso = 0.002
+# D_parallel = 0.002
+D_parallel = 0
 D_perp = -D_parallel/2
 
 # Rotation angles (in degrees)
@@ -77,8 +79,8 @@ for theta in thetas:
 
 #%% Simulation
 # Settings
-O = Sx  # observable
-O_string = 'Sx'
+O = Sx+Ix  # observable
+O_string = 'Sx + Ix'
 threshold = 1e-4  # amplitude threshold for transitions
 # TODO: change filter to so all signals are saved and filter only at plotting stage
 
