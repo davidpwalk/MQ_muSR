@@ -20,12 +20,10 @@ pio.templates.default = "DemonLab"
 # Import utility functions
 from Python.ALC_simulations.utils import *
 
-#%% Function definitions
-
 #%% Parameters and calculations of spin operators and tensors
 # Filename and description for saving results (set filename to None to skip saving)
-filename = 'Python/ALC_simulations/Data/test2.nc'
-desc = 'TF muSR simulation for S=1/2, I=1/2 system with anisotropic dipolar coupling, O=Ix'
+filename = 'Python/ALC_simulations/Data/TF_EPR_dipolar_cc.nc'
+desc = 'TF EPR simulation for S=1/2, I=1/2 system with anisotropic dipolar coupling of D_parallel=2 MHz, O=Sx'
 
 # Magnetic field range (in Tesla)
 magnetic_fields = np.linspace(0, 0.5, 100)
@@ -79,8 +77,8 @@ for theta in thetas:
 
 #%% Simulation
 # Settings
-O = Ix  # observable
-O_string = 'Ix'
+O = Sx  # observable
+O_string = 'Sx'
 threshold = 1e-4  # amplitude threshold for transitions
 # TODO: change filter to so all signals are saved and filter only at plotting stage
 
@@ -196,6 +194,7 @@ results = xr.Dataset(
 )
 
 # TODO: find a smoother solution for saving the data as this can lead to HUGE files if multiple angles and fields are simulated
+# TODO: one idea would be to not save time signals and reconstruct them when loading data
 # Attach simulation parameters as metadata
 results.attrs.update({
     "description": desc,
@@ -215,13 +214,13 @@ if filename:
         print(f"Results successfully saved to '{filename}'.")
 
 #%% Plotting single spectra
-B = 1  # Tesla
-theta = 45  # degrees
-fig = time_signal(theta, B)
+B = 0  # Tesla
+theta = 0  # degrees
+fig = time_signal(results, theta, B)
 fig.update_layout(xaxis_range=[0, 30])
 # fig.show()
 
-fig = stick_spectrum(theta, B, transition_type=None)
+fig = stick_spectrum(results, theta, B, transition_type=None)
 fig.update_layout(title=f'TF muSR spectrum at θ = {theta}°, B = {B} T, O = Sx')
 fig.show()
 #%% Plot angular dependence of spectra at fixed B
