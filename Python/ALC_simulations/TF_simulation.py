@@ -10,7 +10,7 @@ import xarray as xr
 import os
 import warnings
 
-from Python.jacobi_math import jacobi_diagonalize
+from Python.jacobi_math import jacobi
 
 # Set custom plotting style
 from Python.plot_settings import set_demonlab_style
@@ -23,7 +23,7 @@ from Python.ALC_simulations.utils import *
 #%% Parameters and calculations of spin operators and tensors
 # Filename and description for saving results (set filename to None to skip saving)
 filename = 'Python/ALC_simulations/Data/TF_NMR_isotropic_cc.nc'
-# filename = None
+filename = None
 desc = 'TF NMR simulation for S=1/2, I=1/2 system with isotropic hyperfine coupling of A_iso=2 MHz, O=Ix'
 
 # Magnetic field range (in Tesla)
@@ -79,8 +79,8 @@ for theta in thetas:
 
 #%% Simulation
 # Settings
-O = Sx+Ix  # observable
-O_string = 'Sx + Ix'
+O = Ix  # observable
+O_string = 'Ix'
 threshold = 1e-4  # amplitude threshold for transitions
 # TODO: change filter to so all signals are saved and filter only at plotting stage
 
@@ -121,9 +121,8 @@ for ii, T_lab in enumerate(T_labs):
         H_tot = H_zeeman + H_iso + H_dip
 
         # Diagonalize the Hamiltonian using the Jacobi method (H_tot needs to be converted from Qobj to ndarray)
-        psi, H_tot_eigen, psi_t = jacobi_diagonalize(np.real(H_tot.full()))
+        energies, psi = jacobi(np.real(H_tot.full()))
 
-        energies = H_tot_eigen.diagonal()
         energies_arr[ii, jj, :] = energies
 
         O_dense = O.full()
@@ -137,7 +136,7 @@ for ii, T_lab in enumerate(T_labs):
                 amp = abs(O_eigen[kk, ll]) ** 2
                 ttype = classify_transition(ll + 1, kk + 1)
                 # print(f'ttype: {ttype}, kk: {kk+1}, ll: {ll+1}, amp: {amp}, O: \n{O_eigen}') if ttype == 'DQ' or ttype == 'ZQ' else None
-                print(f'theta: {np.degrees(thetas[ii])}, energies: {energies}, \n T_lab: {T_lab} \nH_tot_eigen: \n{H_tot_eigen}')
+                print(f'theta: {np.degrees(thetas[ii])}, energies: {energies}, \n T_lab: {T_lab}')
                 if amp > threshold:
                     freqs.append(energies[ll] - energies[kk])
                     amps.append(amp)
@@ -214,6 +213,8 @@ if filename:
     else:
         results.to_netcdf(filename, engine='netcdf4')
         print(f"Results successfully saved to '{filename}'.")
+else:
+    print("No filename provided. Results not saved to file.")
 
 #%% Plotting single spectra
 B = 0  # Tesla

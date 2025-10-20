@@ -1,5 +1,5 @@
 # Plotting Libaries
-kaleido==1.1.0 # Kaleido versions can be a bit tricky, 1.1.0 works
+kaleido==1.1.0 # Kaleido versions can be a bit tricky, 1.1.0 works, to save static images Google Chrome needs to be installed (???)
 plotly
 matplotlib
 seaborn
