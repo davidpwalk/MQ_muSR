@@ -1,5 +1,5 @@
 # Plotting Libaries
-kaleido==0.1.0.post1 # This version is needed to save .pdf files from plotly figures on windows
+kaleido==1.1.0 # Kaleido versions can be a bit tricky, 1.1.0 works
 plotly
 matplotlib
 seaborn
@@ -11,6 +11,7 @@ scipy
 
 # For advanced data handling
 xarray
+netCDF4
 
 # For better workflow with Git and jupyter nbs
 notebook
