@@ -35,7 +35,7 @@ options.det_op={'ez', 'ex'};
 options.labframe = 1;     % lab frame simulation is on
 % options.awg.s_rate = 10;  % can be switched on to improve accuracy (gives sampling rate of simulation in GHz)
 
-sequence.tp=500.0;     % vector with event lengths in ns
+sequence.tp=2000.0;     % vector with event lengths in ns
 sequence.detection=ones(1,length(sequence.tp)); % detection always on
 
 %-- Generation of relevant matrices --%
@@ -48,13 +48,13 @@ Iy = sop([1/2 1/2],'ey');
 Iz = sop([1/2 1/2],'ez');
 
 % Rotation matrices
-Rz = @(theta) [cos(theta) -sin(theta) 0;
-               sin(theta)  cos(theta) 0;
-               0           0          1];
+Rz = @(phi) [cos(theta) -sin(theta) 0;
+             sin(theta)  cos(theta) 0;
+             0           0          1];
 
-Ry = @(phi) [cos(phi)  0 sin(phi);
-             0         1        0;
-             -sin(phi) 0 cos(phi)];
+Ry = @(theta) [cos(phi)  0 sin(phi);
+               0         1        0;
+               -sin(phi) 0 cos(phi)];
 
 T_principal = diag([D_perpen, D_perpen, D_parallel]);
 
@@ -285,6 +285,7 @@ for ii = 1:Norient
     plot(magnetic_fields, squeeze(spectra(ii, det_op, :)))
 end
 peak_positions = [rad2deg(thetas(:)), peak_positions(:)];
+peak_positions(peak_positions(:, 2) < 1.85, :) = []; % Drop thetas where there is no peak at all
 hold off
 xlabel('B / T')
 ylabel('P_z')
@@ -295,6 +296,17 @@ legend(legendStrings, 'Location', 'best')
 
 % Use print with -painters (vector graphics) and -dpdf
 % exportgraphics(fig, 'C:\Users\walk_d\GitHub\MQ_muSR\Figures\ALC_simulations\Sim_different_theta.pdf', 'ContentType','vector','BackgroundColor','none')
+
+fig = figure('NumberTitle','off','Name','Peak Positions vs theta');
+hold on;
+plot(peak_positions(:, 1), peak_positions(:, 2))
+hold off;
+
+%% i2Dcut trial
+
+figure(101); clf;
+% pcolor(magnetic_fields, thetas, squeeze(spectra(:, det_op, :)))
+i2Dcut_nox(magnetic_fields, thetas, squeeze(spectra(:, det_op, :)).',101)
 
 %% Integrate over thetas
 
@@ -311,5 +323,16 @@ plot(magnetic_fields, powder_spectrum)
 xlabel('B / T')
 ylabel('P_z')
 
-filename = sprintf('old_version_results_all_thetas_awg%.2f_tp%.2f.mat', options.awg.s_rate, sequence.tp);
-% save(filename, 'options', 'system', 'sequence', 'peak_positions', 'peak_positions_diff')
+%% Compare peak positions to analytical counterpart
+
+s = load("ana_peak_positions.mat");
+ana_peak_positions = s.peak_positions;
+
+peak_positions_diff = ana_peak_positions(:, 2) - peak_positions(:, 2);
+
+fig = figure('NumberTitle','off','Name','Peak Pos difference');
+hold on
+plot(peak_positions(:, 1), peak_positions_diff)
+hold off
+
+save('peak_positions_test.mat','peak_positions', 'peak_positions_diff')

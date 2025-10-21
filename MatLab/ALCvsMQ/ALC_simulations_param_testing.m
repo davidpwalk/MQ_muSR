@@ -7,7 +7,7 @@ save_all_data = false;
 
 % Zeeman (gamma / GHz/T)
 ge = 28.02495;
-gmu = 0.1355;
+gmu = -0.1355;
 
 % Coupling constants (in GHz) and rotation angles (in degree)
 A_iso = 0.5148;
@@ -97,9 +97,9 @@ if save_all_data
 end
 
 % Grid for grid search
-awg_grid = [0.5, 2, 5, 10, 20, 50, 200, 500];
+awg_grid = [12];
 
-tp_grid = [500];
+tp_grid = [2000.0];
 
 tic;
 for idx = 1:numel(tp_grid)
@@ -347,5 +347,5 @@ hold on
 plot(peak_positions(:, 1), peak_positions_diff)
 hold off
 filename = sprintf('Grid Search/results_tp%.2f_positive_gmu_negative_ge.mat', tp_grid(idx));
-save(filename, 'options', 'system', 'sequence', 'peak_positions', 'peak_positions_diff')
+% save(filename, 'options', 'system', 'sequence', 'peak_positions', 'peak_positions_diff')
 end

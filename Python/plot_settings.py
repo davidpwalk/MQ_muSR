@@ -117,7 +117,7 @@ DemonLab_template.layout = dict(
         bgcolor="rgba(255, 255, 255, 0.55)",
         bordercolor="black",
         borderwidth=1,
-        font=dict(color="black", size=16),
+        font=dict(color="black", size=20),
         tracegroupgap=10,
     ),
 )
