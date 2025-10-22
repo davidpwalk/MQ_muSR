@@ -97,14 +97,14 @@ if save_all_data
 end
 
 % Grid for grid search
-awg_grid = [12];
+awg_grid = [0.5, 5, 12, 20, 100, 500];
 
-tp_grid = [2000.0];
+tp_grid = [500.0, 2000.0, 4000.0, 8000.0];
 
 tic;
-for idx = 1:numel(tp_grid)
-    options.awg.s_rate = 0.5;
-    sequence.tp = tp_grid(idx);
+for idx = 1:numel(awg_grid)
+    options.awg.s_rate = awg_grid(idx);
+    sequence.tp = 8000.0;
     sequence.detection=ones(1,length(sequence.tp)); % detection always on
 
     [experiment, options] = triple(sequence, options);  % build experiment to get experiment.tp
@@ -321,10 +321,9 @@ plot(peak_positions(:, 1), peak_positions(:, 2))
 hold off;
 % save('peak_positions.mat','peak_positions')
 %% Integrate over thetas
-
 weights = sin(thetas);
 powder_spectrum = zeros(Nfields, 1);
-% TODO: check if the weighted sum is actually calculated correctly
+
 for ii = 1:Nfields
     powder_spectrum(ii) = sum(weights * spectra(:, det_op, ii))/sum(weights);
 end
@@ -334,6 +333,8 @@ hold on
 plot(magnetic_fields, powder_spectrum)
 xlabel('B / T')
 ylabel('P_z')
+
+% save('Data/num_ALC_simulation_powder', 'magnetic_fields', "powder_spectrum")
 
 %% Compare peak positions to analytical counterpart
 
@@ -346,6 +347,6 @@ fig = figure('NumberTitle','off','Name','Peak Pos difference');
 hold on
 plot(peak_positions(:, 1), peak_positions_diff)
 hold off
-filename = sprintf('Grid Search/results_tp%.2f_positive_gmu_negative_ge.mat', tp_grid(idx));
-% save(filename, 'options', 'system', 'sequence', 'peak_positions', 'peak_positions_diff')
+filename = sprintf('Grid Search/results_tp8000_awg_%.2f.mat', awg_grid(idx));
+save(filename, 'options', 'system', 'sequence', 'peak_positions', 'peak_positions_diff')
 end

@@ -15,7 +15,7 @@ D_parallel = 0.002;
 D_perpen = -D_parallel/2;
 
 thetas = deg2rad(linspace(0, 90, 200));
-% thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
+thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
 phis = deg2rad([0]); % Phi has no impact on the spectra
 
 % Range of B0
@@ -40,7 +40,7 @@ options.det_op={'ez', 'ex'};
 options.labframe = 1;       % lab frame simulation is on
 options.awg.s_rate = 12;   % gives sampling rate of simulation in GHz
 
-sequence.tp=2000.0;     % vector with event lengths in ns
+sequence.tp=8000.0;     % vector with event lengths in ns
 sequence.detection=ones(1,length(sequence.tp)); % detection always on
 
 %-- Generation of relevant matrices --%
@@ -296,7 +296,7 @@ xlabel('B / T')
 ylabel('P_z')
 % xlim([1.8675, 1.9325])
 
-% save('Data/num_ALC_simulation_thetas', 'magnetic_fields', "spectra")
+save('Data/num_ALC_simulation_thetas', 'magnetic_fields', "spectra")
 
 legendStrings = arrayfun(@(x) sprintf('\\theta = %.1f°', x), rad2deg(thetas), 'UniformOutput', false);
 legend(legendStrings, 'Location', 'best')
@@ -323,7 +323,7 @@ plot(magnetic_fields, powder_spectrum)
 xlabel('B / T')
 ylabel('P_z')
 
-save('Data/num_ALC_simulation_powder', 'magnetic_fields', "powder_spectrum")
+% save('Data/num_ALC_simulation_powder', 'magnetic_fields', "powder_spectrum")
 
 %% Compare peak positions to analytical counterpart
 
@@ -337,7 +337,7 @@ hold on
 % plot(peak_positions(:, 1), peak_positions_diff)
 hold off
 
-save('peak_positions_0_5awg.mat','peak_positions', 'peak_positions_diff')
+% save('peak_positions_0_5awg.mat','peak_positions', 'peak_positions_diff')
 
 filename = sprintf('results_all_thetas_awg%.2f_tp%.2f.mat', options.awg.s_rate, sequence.tp);
 % save(filename, 'options', 'system', 'sequence', 'peak_positions', 'peak_positions_diff')
