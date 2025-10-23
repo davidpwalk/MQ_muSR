@@ -348,5 +348,5 @@ hold on
 plot(peak_positions(:, 1), peak_positions_diff)
 hold off
 filename = sprintf('Grid Search/results_tp8000_awg_%.2f.mat', awg_grid(idx));
-save(filename, 'options', 'system', 'sequence', 'peak_positions', 'peak_positions_diff')
+save(filename, 'options', 'system', 'sequence', 'peak_positions', 'peak_positions_diff', 'magnetic_fields', 'powder_spectrum')
 end

@@ -15,11 +15,11 @@ D_parallel = 0.002;
 D_perpen = -D_parallel/2;
 
 thetas = deg2rad(linspace(0, 90, 200));
-thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
+% thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
 phis = deg2rad([0]); % Phi has no impact on the spectra
 
 % Range of B0
-magnetic_fields = linspace(1.82, 1.98, 400);
+magnetic_fields = linspace(1.82, 1.98, 1600);
 
 % the system
 system.sqn=[0.5 0.5];       % spin quantum numbers
@@ -38,7 +38,7 @@ options.relaxation=0;       % tells SPIDYAN whether to include relaxation (1) or
 options.down_conversion=0;  % downconversion of signal (1) or not (0)
 options.det_op={'ez', 'ex'};
 options.labframe = 1;       % lab frame simulation is on
-options.awg.s_rate = 12;   % gives sampling rate of simulation in GHz
+options.awg.s_rate = 0.5;   % gives sampling rate of simulation in GHz
 
 sequence.tp=8000.0;     % vector with event lengths in ns
 sequence.detection=ones(1,length(sequence.tp)); % detection always on
@@ -290,13 +290,13 @@ for ii = 1:Norient
     plot(magnetic_fields, squeeze(spectra(ii, det_op, :)))
 end
 peak_positions = [rad2deg(thetas(:)), peak_positions(:)];
-peak_positions(peak_positions(:, 2) < 1.85, :) = []; % Drop thetas where there is no peak at all
+peak_positions([1, length(thetas)], :) = [];
 hold off
 xlabel('B / T')
 ylabel('P_z')
 % xlim([1.8675, 1.9325])
 
-save('Data/num_ALC_simulation_thetas', 'magnetic_fields', "spectra")
+% save('Data/num_ALC_simulation_thetas', 'magnetic_fields', "spectra")
 
 legendStrings = arrayfun(@(x) sprintf('\\theta = %.1f°', x), rad2deg(thetas), 'UniformOutput', false);
 legend(legendStrings, 'Location', 'best')
@@ -340,4 +340,5 @@ hold off
 % save('peak_positions_0_5awg.mat','peak_positions', 'peak_positions_diff')
 
 filename = sprintf('results_all_thetas_awg%.2f_tp%.2f.mat', options.awg.s_rate, sequence.tp);
-% save(filename, 'options', 'system', 'sequence', 'peak_positions', 'peak_positions_diff')
+filename = 'Grid Search/results_tp8000_awg0.5_B_points1600.mat';
+save(filename, 'options', 'system', 'sequence', 'peak_positions', 'peak_positions_diff')

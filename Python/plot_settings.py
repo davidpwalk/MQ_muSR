@@ -82,7 +82,7 @@ DemonLab_template.layout = dict(
     width=600,
     height=400,
     font=dict(family="URW Fourier", size=24, color="black"),
-    margin=dict(l=90, r=20, t=20, b=70),
+    margin=dict(l=90, r=25, t=25, b=70),
     colorway=px.colors.qualitative.G10,
     xaxis=dict(
         showline=True,
