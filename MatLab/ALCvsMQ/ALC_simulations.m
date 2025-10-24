@@ -3,7 +3,7 @@ clear options
 clear sequence
 
 %-- Settings --%
-save_all_data = false;
+save_all_data = true;
 
 % Zeeman (gamma / GHz/T)
 ge = 28.02495;
@@ -16,10 +16,11 @@ D_perpen = -D_parallel/2;
 
 thetas = deg2rad(linspace(0, 90, 200));
 % thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
+thetas = deg2rad([45]);
 phis = deg2rad([0]); % Phi has no impact on the spectra
 
 % Range of B0
-magnetic_fields = linspace(1.82, 1.98, 1600);
+magnetic_fields = linspace(1.82, 1.98, 800);
 
 % the system
 system.sqn=[0.5 0.5];       % spin quantum numbers
@@ -29,7 +30,7 @@ system.interactions = {};
 system.init_state='ez'; % LF mode (muon in the Iz eigenstate)
 system.eq = 'init';  % equilibrium state is the same as initial state
 
-% Add relaxation
+% Add relaxation (need to set options.relaxtion to 1)
 system.T1 = 2200;  % 2.2 us
 system.T2 = 1e10;  % 10 s 
 
@@ -38,7 +39,7 @@ options.relaxation=0;       % tells SPIDYAN whether to include relaxation (1) or
 options.down_conversion=0;  % downconversion of signal (1) or not (0)
 options.det_op={'ez', 'ex'};
 options.labframe = 1;       % lab frame simulation is on
-options.awg.s_rate = 0.5;   % gives sampling rate of simulation in GHz
+options.awg.s_rate = 12;   % gives sampling rate of simulation in GHz
 
 sequence.tp=8000.0;     % vector with event lengths in ns
 sequence.detection=ones(1,length(sequence.tp)); % detection always on
@@ -186,16 +187,18 @@ toc;
 % end
 
 %% Plot time evolution of signal
-% stride = 100;   % downsample
-% t_idx = 1:stride:length(time);
-% t_idx = 1:stride;
-% trace = squeeze(signals{1}(1, t_idx, end));
-% time_ds = time(t_idx);
-% 
-% figure(343); clf; hold on
-% plot(time_ds, real(trace))
-% xlabel('Time / ns')
-% ylabel('Polarization')
+if save_all_data    
+    stride = 100;   % downsample
+    t_idx = 1:stride:length(time);
+    t_idx = 1:stride;
+    trace = squeeze(signals{1}(1, t_idx, end));
+    time_ds = time(t_idx);
+    
+    figure(343); clf; hold on
+    plot(time_ds, real(trace))
+    xlabel('Time / ns')
+    ylabel('Polarization')
+end
 
 %% 
 E_matrix = cell2mat(eigenvalues);
@@ -341,4 +344,4 @@ hold off
 
 filename = sprintf('results_all_thetas_awg%.2f_tp%.2f.mat', options.awg.s_rate, sequence.tp);
 filename = 'Grid Search/results_tp8000_awg0.5_B_points1600.mat';
-save(filename, 'options', 'system', 'sequence', 'peak_positions', 'peak_positions_diff')
+% save(filename, 'options', 'system', 'sequence', 'peak_positions', 'peak_positions_diff')
