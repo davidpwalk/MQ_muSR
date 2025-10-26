@@ -22,13 +22,13 @@ from Python.ALC_simulations.utils import *
 
 #%% Parameters and calculations of spin operators and tensors
 # Filename and description for saving results (set filename to None to skip saving)
-filename = 'Python/ALC_simulations/Data/TF_NMR_isotropic_cc.nc'
+# filename = 'Python/ALC_simulations/Data/TF_NMR_isotropic_cc.nc'
 filename = None
 desc = 'TF NMR simulation for S=1/2, I=1/2 system with isotropic hyperfine coupling of A_iso=2 MHz, O=Ix'
 
 # Magnetic field range (in Tesla)
 magnetic_fields = np.linspace(0, 0.5, 100)
-magnetic_fields = [0]
+magnetic_fields = [0.1]
 
 # Zeeman (gamma / GHz/T)
 ge = 28.02495
@@ -36,10 +36,10 @@ gmu = -0.1355
 
 # Coupling constants (in GHz) and rotation angle (in degrees)
 # A_iso = 0.5148
-# A_iso = 0.0
-A_iso = 0.002
-# D_parallel = 0.002
-D_parallel = 0
+A_iso = 0.0
+# A_iso = 0.002
+D_parallel = 0.002
+# D_parallel = 0
 D_perp = -D_parallel/2
 
 # Rotation angles (in degrees)
@@ -138,7 +138,7 @@ for ii, T_lab in enumerate(T_labs):
                 # print(f'ttype: {ttype}, kk: {kk+1}, ll: {ll+1}, amp: {amp}, O: \n{O_eigen}') if ttype == 'DQ' or ttype == 'ZQ' else None
                 print(f'theta: {np.degrees(thetas[ii])}, energies: {energies}, \n T_lab: {T_lab}')
                 if amp > threshold:
-                    freqs.append(energies[ll] - energies[kk])
+                    freqs.append(abs(energies[ll] - energies[kk]))
                     amps.append(amp)
                     ttype = classify_transition(ll + 1, kk + 1)
                     ttypes.append(ttype)
@@ -215,17 +215,96 @@ if filename:
         print(f"Results successfully saved to '{filename}'.")
 else:
     print("No filename provided. Results not saved to file.")
+#%% test
+freq_test = 0.002  # GHz
+time_test = np.linspace(0, 8000, 16000)  # ns
+signal_test = np.cos(2 * np.pi * freq_test * time_test)
+
+px.line(x=time_test, y=signal_test).show()
+
+
+#%% get signals
+
+def generate_signals(results, time, transition_filter=None):
+    """
+    Generate time-domain signals from xarray results and return as a pandas DataFrame.
+
+    Parameters
+    ----------
+    results : xr.Dataset
+        Dataset containing 'frequencies', 'amplitudes', and 'transition_types'.
+    time : np.ndarray
+        Time vector used to reconstruct the signal.
+    transition_filter : list[str], optional
+        If provided, only include these transition types.
+
+    Returns
+    -------
+    pd.DataFrame
+        Columns correspond to transition types, index corresponds to time.
+    """
+    # Extract arrays
+    freqs = results["frequencies"].values
+    amps = results["amplitudes"].values
+    ttypes = results["transition_types"].values
+    transition_types = results["transition_type"].values
+
+    # Initialize signal accumulator
+    signals = {tt: np.zeros_like(time, dtype=float) for tt in transition_types}
+
+    # Iterate over all transitions
+    for theta_idx in range(freqs.shape[0]):          # theta dimension
+        for B_idx in range(freqs.shape[1]):          # magnetic field dimension
+            for tr_idx in range(freqs.shape[2]):     # transition dimension
+                freq = freqs[theta_idx, B_idx, tr_idx]
+                amp = amps[theta_idx, B_idx, tr_idx]
+                ttype = ttypes[theta_idx, B_idx, tr_idx]
+
+                # Skip padded NaN entries
+                if np.isnan(freq) or np.isnan(amp) or not isinstance(ttype, str):
+                    continue
+
+                if transition_filter and ttype not in transition_filter:
+                    continue
+                if ttype not in signals:
+                    continue
+
+                signals[ttype] += amp * np.cos(2 * np.pi * abs(freq) * time)
+
+    # Convert to DataFrame
+    df = pd.DataFrame(signals, index=time)
+
+    signal_total = np.zeros_like(time, dtype=float)
+    for ttype in transition_types:
+        signal_total += df[ttype]
+
+    df['Total'] = signal_total
+    df.index.name = "time"
+    return df
+
+signals_df = generate_signals(results, time, transition_filter=['SQE', 'SQMu'])
+
+px.line(x=signals_df.index, y=signals_df['Total']).show()
+
+test = results['signal'].sel(transition_type='SQMu', theta=0, B=0.1)
+test += results['signal'].sel(transition_type='SQE', theta=0, B=0.1)
+
+px.line(x=results['time'], y=test).show()
 
 #%% Plotting single spectra
-B = 0  # Tesla
+B = 10  # Tesla
 theta = 0  # degrees
 fig = time_signal(results, theta, B)
 fig.update_layout(xaxis_range=[0, 30])
 # fig.show()
 
 fig = stick_spectrum(results, theta, B, transition_type=None)
-fig.update_layout(title=f'TF muSR spectrum at θ = {theta}°, B = {B} T, O = Sx')
+fig.update_layout(
+    title=f'TF muSR @ θ = {theta}°, B = {B} T, O = {O_string}',
+    margin=dict(t=75),
+)
 fig.show()
+# fig.write_html('../../Figures/ALC_simulations/TF_B10_OIx_D2MHz.html')
 #%% Plot angular dependence of spectra at fixed B
 B = 1  # Tesla
 thetas = np.linspace(0, 90, 6)

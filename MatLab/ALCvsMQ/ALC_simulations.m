@@ -41,7 +41,7 @@ options.det_op={'ez', 'ex'};
 options.labframe = 1;       % lab frame simulation is on
 options.awg.s_rate = 12;   % gives sampling rate of simulation in GHz
 
-sequence.tp=8000.0;     % vector with event lengths in ns
+sequence.tp=100000.0;     % vector with event lengths in ns
 sequence.detection=ones(1,length(sequence.tp)); % detection always on
 
 %-- Generation of relevant matrices --%
@@ -167,26 +167,13 @@ end
 
 toc;
 
-%%
-% [experiment, options] = triple(sequence, options);  % build experiment to get experiment.tp
-% 
-% signal = zeros(size(signals{1}));
-% Nt = size(signals{1}, 2);
-% time = (0:Nt-1) * experiment.dt;
-% 
-% % Integrate
-% integrals = zeros(Norient, numel(options.det_op), numel(magnetic_fields));
-% 
-% for k = 1:Norient
-%     for n = 1:Nfields
-%         % integrate over time (dimension 2)
-%         integrals(k, 1, n) = mean(real(allsignals{k,n}.sf(1,:)));
-%         integrals(k, 2, n) = mean(real(allsignals{k,n}.sf(2,:)));
-%         % squeeze(sum(real(signals{k}), 2)) / Nt;
-%     end
-% end
-
 %% Plot time evolution of signal
+[experiment, options] = triple(sequence, options);  % build experiment to get experiment.tp
+
+signal = zeros(size(signals{1}));
+Nt = size(signals{1}, 2);
+time = (0:Nt-1) * experiment.dt;
+
 if save_all_data    
     stride = 100;   % downsample
     t_idx = 1:stride:length(time);

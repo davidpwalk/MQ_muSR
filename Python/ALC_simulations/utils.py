@@ -33,15 +33,12 @@ def merge_transitions(freqs, amps, types, tol=1e-8, zero_tol=1e-12):
     if freqs.size == 0:
         return [], [], []
 
-    # optional: snap tiny frequencies to zero
     if zero_tol is not None:
         small = np.abs(freqs) <= zero_tol
         freqs[small] = 0.0
 
-    # adjacency: True where pairwise difference <= tol
     adj = np.abs(freqs[:, None] - freqs[None, :]) <= tol
 
-    # find connected components (DFS)
     n = len(freqs)
     visited = np.zeros(n, dtype=bool)
     groups = []
@@ -135,12 +132,12 @@ def plot_powder_spectrum(signal):
 # Plotting functions
 def time_signal(results, theta, B, transition_type=None):
     if transition_type:
-        mask = results['transition_types'].sel(theta=theta, B=B, method='nearest') == transition_type
-        freqs = results['frequencies'].sel(theta=theta, B=B, method='nearest').where(mask, drop=True).values
-        amps = results['amplitudes'].sel(theta=theta, B=B, method='nearest').where(mask, drop=True).values
+        mask = results['transition_types'].sel(theta=theta, B=B) == transition_type
+        freqs = results['frequencies'].sel(theta=theta, B=B).where(mask, drop=True).values
+        amps = results['amplitudes'].sel(theta=theta, B=B).where(mask, drop=True).values
     else:
-        freqs = results['frequencies'].sel(theta=theta, B=B, method='nearest').values
-        amps = results['amplitudes'].sel(theta=theta, B=B, method='nearest').values
+        freqs = results['frequencies'].sel(theta=theta, B=B).values
+        amps = results['amplitudes'].sel(theta=theta, B=B).values
 
     # remove NaN padding
     mask = np.isfinite(freqs) & np.isfinite(amps)
@@ -161,9 +158,9 @@ def stick_spectrum(results, theta, B, transition_type=None, merge_tol=1e-8):
     Display stick spectrum at given θ and B.
     Optionally merges nearby frequencies (within `merge_tol`) only for visualization.
     """
-    sel_freqs = results['frequencies'].sel(theta=theta, B=B, method='nearest')
-    sel_amps = results['amplitudes'].sel(theta=theta, B=B, method='nearest')
-    sel_types = results['transition_types'].sel(theta=theta, B=B, method='nearest')
+    sel_freqs = results['frequencies'].sel(theta=theta, B=B)
+    sel_amps = results['amplitudes'].sel(theta=theta, B=B)
+    sel_types = results['transition_types'].sel(theta=theta, B=B)
 
     # Handle one or multiple transition types
     if transition_type is not None:
