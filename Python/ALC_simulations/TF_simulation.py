@@ -12,13 +12,13 @@ import warnings
 
 from Python.jacobi_math import jacobi
 
+# Import utility functions
+from Python.ALC_simulations.utils import *
+
 # Set custom plotting style
 from Python.plot_settings import set_demonlab_style
 set_demonlab_style()
 pio.templates.default = "DemonLab"
-
-# Import utility functions
-from Python.ALC_simulations.utils import *
 
 #%% Parameters and calculations of spin operators and tensors
 # Filename and description for saving results (set filename to None to skip saving)
@@ -26,26 +26,29 @@ from Python.ALC_simulations.utils import *
 filename = None
 desc = 'TF NMR simulation for S=1/2, I=1/2 system with isotropic hyperfine coupling of A_iso=2 MHz, O=Ix'
 
+# TODO: maybe implement option to generate all signals (for each B and theta), this consumes ALOT of memory
+gen_all_signals = False
+
 # Magnetic field range (in Tesla)
 magnetic_fields = np.linspace(0, 0.5, 100)
-magnetic_fields = [0.1]
+# magnetic_fields = [0.1]
 
 # Zeeman (gamma / GHz/T)
 ge = 28.02495
 gmu = -0.1355
 
 # Coupling constants (in GHz) and rotation angle (in degrees)
-# A_iso = 0.5148
+A_iso = 0.5148
 A_iso = 0.0
 # A_iso = 0.002
-D_parallel = 0.002
+D_parallel = 0.5
 # D_parallel = 0
 D_perp = -D_parallel/2
 
 # Rotation angles (in degrees)
 thetas = np.radians(np.linspace(0, 90, 200, dtype=np.float64))
 # thetas = np.radians([0, 45, 90, 180])
-thetas = [0]
+# thetas = [0]
 
 # Define the spin operators for S=1/2 and I=1/2
 S = 0.5
@@ -69,6 +72,7 @@ def Ry(theta):
     return np.array([[np.cos(theta),  0, np.sin(theta)],
                      [0,              1,             0],
                      [-np.sin(theta), 0, np.cos(theta)]])
+
 
 # Generate rotated tensors
 T_labs = []
@@ -136,7 +140,7 @@ for ii, T_lab in enumerate(T_labs):
                 amp = abs(O_eigen[kk, ll]) ** 2
                 ttype = classify_transition(ll + 1, kk + 1)
                 # print(f'ttype: {ttype}, kk: {kk+1}, ll: {ll+1}, amp: {amp}, O: \n{O_eigen}') if ttype == 'DQ' or ttype == 'ZQ' else None
-                print(f'theta: {np.degrees(thetas[ii])}, energies: {energies}, \n T_lab: {T_lab}')
+                # print(f'theta: {np.degrees(thetas[ii])}, energies: {energies}, \n T_lab: {T_lab}')
                 if amp > threshold:
                     freqs.append(abs(energies[ll] - energies[kk]))
                     amps.append(amp)
@@ -145,40 +149,15 @@ for ii, T_lab in enumerate(T_labs):
 
         # store frequencies/amplitudes (pad with NaN if fewer than max_transitions)
         # freqs, amps, ttypes = merge_transitions(freqs, amps, ttypes)
-        print(f'freqs: {freqs}, amps: {amps}, types: {ttypes}')
+        # print(f'freqs: {freqs}, amps: {amps}, types: {ttypes}')
         n_trans = len(freqs)
         frequencies_arr[ii, jj, :n_trans] = freqs
         amplitudes_arr[ii, jj, :n_trans] = amps
         ttypes_arr[ii, jj, :n_trans] = ttypes
 
-        # build signal
-        signal_SQMu = np.zeros_like(time, dtype=float)
-        signal_SQE = np.zeros_like(time, dtype=float)
-        signal_ZQ = np.zeros_like(time, dtype=float)
-        signal_DQ = np.zeros_like(time, dtype=float)
-
-        for amp, freq, ttype in zip(amps, freqs, ttypes):
-            if ttype == "SQMu":
-                signal_SQMu += amp * np.cos(2 * np.pi * abs(freq) * time)
-            elif ttype == "SQE":
-                signal_SQE += amp * np.cos(2 * np.pi * abs(freq) * time)
-            elif ttype == "ZQ":
-                signal_ZQ += amp * np.cos(2 * np.pi * abs(freq) * time)
-            elif ttype == "DQ":
-                signal_DQ += amp * np.cos(2 * np.pi * abs(freq) * time)
-            else:
-                raise ValueError(f"Unknown transition type: {ttype}")
-
-        type_to_index = {t: i for i, t in enumerate(transition_types)}
-
-        for amp, freq, ttype in zip(amps, freqs, ttypes):
-            idx = type_to_index[ttype]
-            signals_arr[idx, ii, jj, :] += amp * np.cos(2 * np.pi * abs(freq) * time)
-
 # Wrap into Dataset
 results = xr.Dataset(
     {
-        "signal": (["transition_type", "theta", "B", "time"], signals_arr),
         "energies": (["theta", "B", "level"], energies_arr),
         "frequencies": (["theta", "B", "transition"], frequencies_arr),
         "amplitudes": (["theta", "B", "transition"], amplitudes_arr),
@@ -194,8 +173,6 @@ results = xr.Dataset(
     }
 )
 
-# TODO: find a smoother solution for saving the data as this can lead to HUGE files if multiple angles and fields are simulated
-# TODO: one idea would be to not save time signals and reconstruct them when loading data
 # Attach simulation parameters as metadata
 results.attrs.update({
     "description": desc,
@@ -215,84 +192,9 @@ if filename:
         print(f"Results successfully saved to '{filename}'.")
 else:
     print("No filename provided. Results not saved to file.")
-#%% test
-freq_test = 0.002  # GHz
-time_test = np.linspace(0, 8000, 16000)  # ns
-signal_test = np.cos(2 * np.pi * freq_test * time_test)
-
-px.line(x=time_test, y=signal_test).show()
-
-
-#%% get signals
-
-def generate_signals(results, time, transition_filter=None):
-    """
-    Generate time-domain signals from xarray results and return as a pandas DataFrame.
-
-    Parameters
-    ----------
-    results : xr.Dataset
-        Dataset containing 'frequencies', 'amplitudes', and 'transition_types'.
-    time : np.ndarray
-        Time vector used to reconstruct the signal.
-    transition_filter : list[str], optional
-        If provided, only include these transition types.
-
-    Returns
-    -------
-    pd.DataFrame
-        Columns correspond to transition types, index corresponds to time.
-    """
-    # Extract arrays
-    freqs = results["frequencies"].values
-    amps = results["amplitudes"].values
-    ttypes = results["transition_types"].values
-    transition_types = results["transition_type"].values
-
-    # Initialize signal accumulator
-    signals = {tt: np.zeros_like(time, dtype=float) for tt in transition_types}
-
-    # Iterate over all transitions
-    for theta_idx in range(freqs.shape[0]):          # theta dimension
-        for B_idx in range(freqs.shape[1]):          # magnetic field dimension
-            for tr_idx in range(freqs.shape[2]):     # transition dimension
-                freq = freqs[theta_idx, B_idx, tr_idx]
-                amp = amps[theta_idx, B_idx, tr_idx]
-                ttype = ttypes[theta_idx, B_idx, tr_idx]
-
-                # Skip padded NaN entries
-                if np.isnan(freq) or np.isnan(amp) or not isinstance(ttype, str):
-                    continue
-
-                if transition_filter and ttype not in transition_filter:
-                    continue
-                if ttype not in signals:
-                    continue
-
-                signals[ttype] += amp * np.cos(2 * np.pi * abs(freq) * time)
-
-    # Convert to DataFrame
-    df = pd.DataFrame(signals, index=time)
-
-    signal_total = np.zeros_like(time, dtype=float)
-    for ttype in transition_types:
-        signal_total += df[ttype]
-
-    df['Total'] = signal_total
-    df.index.name = "time"
-    return df
-
-signals_df = generate_signals(results, time, transition_filter=['SQE', 'SQMu'])
-
-px.line(x=signals_df.index, y=signals_df['Total']).show()
-
-test = results['signal'].sel(transition_type='SQMu', theta=0, B=0.1)
-test += results['signal'].sel(transition_type='SQE', theta=0, B=0.1)
-
-px.line(x=results['time'], y=test).show()
 
 #%% Plotting single spectra
-B = 10  # Tesla
+B = magnetic_fields[10]  # Tesla
 theta = 0  # degrees
 fig = time_signal(results, theta, B)
 fig.update_layout(xaxis_range=[0, 30])
@@ -305,6 +207,30 @@ fig.update_layout(
 )
 fig.show()
 # fig.write_html('../../Figures/ALC_simulations/TF_B10_OIx_D2MHz.html')
+
+#%% Calculate and plot powder signals
+B = 0  # Tesla
+B = magnetic_fields[30]
+
+powder_signals_df = generate_powder_signals(results, time, magnetic_field=B, transition_filter=None)
+
+fig = go.Figure()
+for ttype in transition_types:
+    fig.add_trace(go.Scatter(x=powder_signals_df.index, y=powder_signals_df[ttype], mode='lines', name=ttype))
+fig.show()
+
+powder_signal = powder_signals_df['Total'].values
+time = powder_signals_df.index.values
+
+px.line(x=time, y=powder_signal).show()
+
+# #%% Plot powder spectra
+fig, freq = plot_powder_spectrum(powder_signal, time, verbose=True)
+fig.update_yaxes(automargin=True)
+fig.update_layout(title=f'Powder muSR spectrum at B = {B:.1f} T, O = Ix',
+                  margin=dict(t=75),)
+fig.show()
+# fig.write_html(f'../../Figures/ALC_simulations/TF_powder_spectrum_thin_pake_pattern_{B}T_Ix_Sx.html')
 #%% Plot angular dependence of spectra at fixed B
 B = 1  # Tesla
 thetas = np.linspace(0, 90, 6)
@@ -334,7 +260,7 @@ fig.update_layout(
     template="DemonLab",
     legend=dict(y=0.5, x=1.02, xanchor="left", yanchor="middle"),
 )
-fig.show(renderer='browser')
+# fig.show(renderer='browser')
 # fig.write_html('../../Figures/ALC_simulations/TF_angular_dependence.html')
 
 #%% Plot B dependence of spectra at fixed angle
@@ -365,22 +291,5 @@ fig.update_layout(
     template="DemonLab",
     legend=dict(y=0.5, x=1.02, xanchor="left", yanchor="middle"),
 )
-fig.show(renderer='browser')
+# fig.show(renderer='browser')
 # fig.write_html('../../Figures/ALC_simulations/TF_B_dependence.html')
-#%% Sum time-domain signals over angles
-# TODO: check impact of weighting and normalization
-# powder_signals = signals.sum(dim='theta')
-
-powder_signals = calc_powder_signal(results, transition_types=None)
-
-fig = px.line(x=powder_signals.sel(B=1, method='nearest').time, y=powder_signals.sel(B=1, method='nearest'), labels={'x': 'Time / ns',
-                                                                                                                     'y': 'Signal'})
-fig.show()
-
-#%% Plot powder spectra
-B = 1  # Tesla
-fig, freq = plot_powder_spectrum(powder_signals.sel(B=B, method='nearest').values)
-fig.update_yaxes(automargin=True)
-fig.update_layout(title=f'Powder muSR spectrum at B = {B} T, O = Ix')
-fig.show()
-# fig.write_html(f'../../Figures/ALC_simulations/TF_powder_spectrum_thin_pake_pattern_{B}T_Ix_Sx.html')

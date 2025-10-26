@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import xarray as xr
 import plotly.express as px
 import plotly.io as pio
@@ -112,9 +113,6 @@ def apodize(signal, time):
 
 
 def ft(signal, time):
-    signal, time = apodize(signal, time)
-    fig = px.line(x=time, y=signal, labels={'x': 'Time / ns', 'y': 'Signal'})
-    fig.show()
     dt = time[1] - time[0]
     power_spectrum = (np.abs(fft(signal)))**2
     power_spectrum = fftshift(power_spectrum/max(power_spectrum))
@@ -122,8 +120,16 @@ def ft(signal, time):
     return power_spectrum, freq
 
 
-def plot_powder_spectrum(signal):
-    spectrum, freq = ft(signal)
+def plot_powder_spectrum(signal, time, verbose=False):
+    signal, time = apodize(signal, time)
+    if verbose:
+        fig = px.line(x=time, y=signal, labels={'x': 'Time / ns', 'y': 'Signal'})
+        fig.update_layout(title='Apodized Powder Signal',
+                          margin=dict(t=75),
+        )
+        fig.show()
+
+    spectrum, freq = ft(signal, time)
     fig = px.line(x=freq, y=spectrum, labels={'x': 'Frequency / GHz', 'y': 'Intensity'})
     # fig = px.line(x=np.arange(spectrum.shape[0]), y=spectrum, labels={'x': 'Frequency / GHz', 'y': 'Intensity'})
     return fig, freq
@@ -238,3 +244,67 @@ def stick_spectrum(results, theta, B, transition_type=None, merge_tol=1e-8):
         template="DemonLab"
     )
     return fig
+
+
+def generate_powder_signals(results, time, magnetic_field, transition_filter=None):
+    """
+    Generate time-domain signals from xarray results and return as a pandas DataFrame.
+
+    Parameters
+    ----------
+    results : xr.Dataset
+        Dataset containing 'frequencies', 'amplitudes', and 'transition_types'.
+    time : np.ndarray
+        Time vector used to reconstruct the signal.
+    magnetic_field : float
+        Magnetic field value at which to extract the signals.
+    transition_filter : list[str], optional
+        If provided, only include these transition types.
+
+    Returns
+    -------
+    pd.DataFrame
+        Columns correspond to transition types and total signal, index corresponds to time.
+    """
+    # Extract arrays
+    freqs = results["frequencies"].sel(B=magnetic_field).values
+    amps = results["amplitudes"].sel(B=magnetic_field).values
+    ttypes = results["transition_types"].sel(B=magnetic_field).values
+    transition_types = results["transition_type"].values
+    thetas = np.radians(results["theta"].values)
+
+    # Initialize signal accumulator
+    signals = {tt: np.zeros_like(time, dtype=float) for tt in transition_types}
+
+    # Iterate over all transitions
+    for theta_idx in range(freqs.shape[0]):          # theta dimension
+            for tr_idx in range(freqs.shape[1]):     # transition dimension
+                freq = freqs[theta_idx, tr_idx]
+                amp = amps[theta_idx, tr_idx]
+                ttype = ttypes[theta_idx, tr_idx]
+
+                # Skip padded NaN entries
+                if np.isnan(freq) or np.isnan(amp) or not isinstance(ttype, str):
+                    continue
+
+                if transition_filter and ttype not in transition_filter:
+                    continue
+                if ttype not in signals:
+                    continue
+
+                signals[ttype] += np.sin(thetas[theta_idx]) * amp * np.cos(2 * np.pi * abs(freq) * time)
+
+    # Convert to DataFrame
+    df = pd.DataFrame(signals, index=time)
+
+    norm = np.sum(np.sin(thetas))
+    for ttype in signals:
+        signals[ttype] /= norm
+
+    signal_total = np.zeros_like(time, dtype=float)
+    for ttype in transition_types:
+        signal_total += df[ttype]
+
+    df['Total'] = signal_total
+    df.index.name = "time"
+    return df
