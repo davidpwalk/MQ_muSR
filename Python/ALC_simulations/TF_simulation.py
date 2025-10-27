@@ -30,25 +30,25 @@ desc = 'TF NMR simulation for S=1/2, I=1/2 system with isotropic hyperfine coupl
 gen_all_signals = False
 
 # Magnetic field range (in Tesla)
-magnetic_fields = np.linspace(0, 0.5, 100)
-# magnetic_fields = [0.1]
+magnetic_fields = np.linspace(0, 5, 100)
+magnetic_fields = [5]
 
 # Zeeman (gamma / GHz/T)
 ge = 28.02495
 gmu = -0.1355
 
 # Coupling constants (in GHz) and rotation angle (in degrees)
-A_iso = 0.5148
+# A_iso = 0.5148
 A_iso = 0.0
 # A_iso = 0.002
-D_parallel = 0.5
+D_parallel = 0.03
 # D_parallel = 0
 D_perp = -D_parallel/2
 
 # Rotation angles (in degrees)
-thetas = np.radians(np.linspace(0, 90, 200, dtype=np.float64))
+thetas = np.radians(np.linspace(0, 90, 1600, dtype=np.float64))
 # thetas = np.radians([0, 45, 90, 180])
-# thetas = [0]
+# thetas = np.radians([45])
 
 # Define the spin operators for S=1/2 and I=1/2
 S = 0.5
@@ -88,7 +88,6 @@ O_string = 'Ix'
 threshold = 1e-4  # amplitude threshold for transitions
 # TODO: change filter to so all signals are saved and filter only at plotting stage
 
-
 time = np.linspace(0, 8000, 32000)
 n_theta = len(thetas)
 n_B = len(magnetic_fields)
@@ -103,8 +102,6 @@ amplitudes_arr = np.full((n_theta, n_B, max_transitions), np.nan)
 ttypes_arr = np.full((n_theta, n_B, max_transitions), None, dtype=object)
 
 transition_types = ["SQMu", "SQE", "ZQ", "DQ"]
-
-signals_arr = np.zeros((len(transition_types), n_theta, n_B, n_time))
 
 # TODO: fix error where merging transitions leads to error in signal calculation
 for ii, T_lab in enumerate(T_labs):
@@ -194,15 +191,15 @@ else:
     print("No filename provided. Results not saved to file.")
 
 #%% Plotting single spectra
-B = magnetic_fields[10]  # Tesla
-theta = 0  # degrees
+B = magnetic_fields[5]  # Tesla
+theta = thetas[50]  # degrees
 fig = time_signal(results, theta, B)
 fig.update_layout(xaxis_range=[0, 30])
 # fig.show()
 
 fig = stick_spectrum(results, theta, B, transition_type=None)
 fig.update_layout(
-    title=f'TF muSR @ θ = {theta}°, B = {B} T, O = {O_string}',
+    title=f'TF muSR @ θ = {theta}°, B = {B:.2f} T, O = {O_string}',
     margin=dict(t=75),
 )
 fig.show()
@@ -210,24 +207,20 @@ fig.show()
 
 #%% Calculate and plot powder signals
 B = 0  # Tesla
-B = magnetic_fields[30]
+B = magnetic_fields[99]
+print(B)
 
-powder_signals_df = generate_powder_signals(results, time, magnetic_field=B, transition_filter=None)
-
-fig = go.Figure()
-for ttype in transition_types:
-    fig.add_trace(go.Scatter(x=powder_signals_df.index, y=powder_signals_df[ttype], mode='lines', name=ttype))
-fig.show()
+powder_signals_df = generate_powder_signals(results, time, magnetic_field=B, transition_filter=['SQE', 'SQMu'], make_plot=True)
 
 powder_signal = powder_signals_df['Total'].values
 time = powder_signals_df.index.values
 
-px.line(x=time, y=powder_signal).show()
+# px.line(x=time, y=powder_signal).show()
 
 # #%% Plot powder spectra
 fig, freq = plot_powder_spectrum(powder_signal, time, verbose=True)
 fig.update_yaxes(automargin=True)
-fig.update_layout(title=f'Powder muSR spectrum at B = {B:.1f} T, O = Ix',
+fig.update_layout(title=f'Powder spectrum @ B = {B:.2f} T, O = {O_string}',
                   margin=dict(t=75),)
 fig.show()
 # fig.write_html(f'../../Figures/ALC_simulations/TF_powder_spectrum_thin_pake_pattern_{B}T_Ix_Sx.html')

@@ -246,7 +246,7 @@ def stick_spectrum(results, theta, B, transition_type=None, merge_tol=1e-8):
     return fig
 
 
-def generate_powder_signals(results, time, magnetic_field, transition_filter=None):
+def generate_powder_signals(results, time, magnetic_field, transition_filter=None, make_plot=False):
     """
     Generate time-domain signals from xarray results and return as a pandas DataFrame.
 
@@ -287,12 +287,10 @@ def generate_powder_signals(results, time, magnetic_field, transition_filter=Non
                 if np.isnan(freq) or np.isnan(amp) or not isinstance(ttype, str):
                     continue
 
-                if transition_filter and ttype not in transition_filter:
-                    continue
                 if ttype not in signals:
                     continue
 
-                signals[ttype] += np.sin(thetas[theta_idx]) * amp * np.cos(2 * np.pi * abs(freq) * time)
+                signals[ttype] += np.sin(thetas[theta_idx]) * amp * np.cos(2 * np.pi * freq * time)
 
     # Convert to DataFrame
     df = pd.DataFrame(signals, index=time)
@@ -302,9 +300,25 @@ def generate_powder_signals(results, time, magnetic_field, transition_filter=Non
         signals[ttype] /= norm
 
     signal_total = np.zeros_like(time, dtype=float)
-    for ttype in transition_types:
+
+    # Sum over selected transition types
+    if transition_filter is None:
+        transition_filter = transition_types
+
+    for ttype in transition_filter:
         signal_total += df[ttype]
 
     df['Total'] = signal_total
     df.index.name = "time"
+
+    if make_plot:
+        fig = go.Figure()
+
+        for ttype in transition_types:
+            visibility = 'legendonly' if ttype not in transition_filter else True
+            fig.add_trace(go.Scatter(x=df.index, y=df[ttype], mode='lines', name=ttype, visible=visibility))
+
+        fig.add_trace(go.Scatter(x=df.index, y=df['Total'], mode='lines', name='Total', line=dict(color='black'), visible='legendonly'))
+
+        fig.show()
     return df

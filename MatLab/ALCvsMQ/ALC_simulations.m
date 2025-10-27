@@ -3,7 +3,7 @@ clear options
 clear sequence
 
 %-- Settings --%
-save_all_data = true;
+save_all_data = false;
 
 % Zeeman (gamma / GHz/T)
 ge = 28.02495;
@@ -15,13 +15,13 @@ D_parallel = 0.002;
 D_perpen = -D_parallel/2;
 
 thetas = deg2rad(linspace(0, 90, 200));
-% thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
-thetas = deg2rad([45]);
+thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
+% thetas = deg2rad([45]);
 phis = deg2rad([0]); % Phi has no impact on the spectra
 
 % Range of B0
-% magnetic_fields = linspace(1.82, 1.98, 200);
-magnetic_fields = [1.9];
+magnetic_fields = linspace(1.82, 1.98, 800);
+% magnetic_fields = [1.9];
 
 % the system
 system.sqn=[0.5 0.5];       % spin quantum numbers
@@ -33,16 +33,16 @@ system.eq = 'init';  % equilibrium state is the same as initial state
 
 % Add relaxation (need to set options.relaxtion to 1)
 system.T1 = 2200;  % 2.2 us
-system.T2 = 1e10;  % 10 s 
+system.T2 = 2200;  % 2.2 us
 
 % Set options
-options.relaxation=0;       % tells SPIDYAN whether to include relaxation (1) or not (0)
+options.relaxation=1;       % tells SPIDYAN whether to include relaxation (1) or not (0)
 options.down_conversion=0;  % downconversion of signal (1) or not (0)
 options.det_op={'ez', 'ex'};
 options.labframe = 1;       % lab frame simulation is on
 options.awg.s_rate = 5;   % gives sampling rate of simulation in GHz
 
-sequence.tp=128000.0;     % vector with event lengths in ns
+sequence.tp=16000.0;     % vector with event lengths in ns
 sequence.detection=ones(1,length(sequence.tp)); % detection always on
 
 %-- Generation of relevant matrices --%
@@ -104,6 +104,7 @@ end
 
 tic;
 
+% parpool('Threads')  % Start ThreadPool, threads share memory
 for k = 1:Norient
     T_lab = T_labs{k};
     temp_eigenvalues = zeros(4, Nfields);
@@ -178,13 +179,16 @@ time = (0:Nt-1) * experiment.dt;
 if save_all_data
     stride = 1;   % downsample
     t_idx = 1:stride:length(time);
-    trace = squeeze(signals{1}(1, t_idx, end));
+    trace = squeeze(signals{1}(1, t_idx, 400));
     time_ds = time(t_idx);
     
-    figure(343); clf; hold on
+    fig = figure('NumberTitle','off','Name','Time-Domain Spectrum Pz');
+    hold on
     plot(time_ds, real(trace))
     xlabel('Time / ns')
     ylabel('Polarization')
+
+    % save('ALC_signal_time_evolution_on_resonance.mat', 'trace', 'time_ds')
 end
 
 %% 
