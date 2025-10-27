@@ -20,7 +20,8 @@ thetas = deg2rad([45]);
 phis = deg2rad([0]); % Phi has no impact on the spectra
 
 % Range of B0
-magnetic_fields = linspace(1.82, 1.98, 800);
+% magnetic_fields = linspace(1.82, 1.98, 200);
+magnetic_fields = [1.9];
 
 % the system
 system.sqn=[0.5 0.5];       % spin quantum numbers
@@ -39,9 +40,9 @@ options.relaxation=0;       % tells SPIDYAN whether to include relaxation (1) or
 options.down_conversion=0;  % downconversion of signal (1) or not (0)
 options.det_op={'ez', 'ex'};
 options.labframe = 1;       % lab frame simulation is on
-options.awg.s_rate = 12;   % gives sampling rate of simulation in GHz
+options.awg.s_rate = 5;   % gives sampling rate of simulation in GHz
 
-sequence.tp=100000.0;     % vector with event lengths in ns
+sequence.tp=128000.0;     % vector with event lengths in ns
 sequence.detection=ones(1,length(sequence.tp)); % detection always on
 
 %-- Generation of relevant matrices --%
@@ -168,16 +169,15 @@ end
 toc;
 
 %% Plot time evolution of signal
-[experiment, options] = triple(sequence, options);  % build experiment to get experiment.tp
+% [experiment, options] = triple(sequence, options);  % build experiment to get experiment.tp
 
 signal = zeros(size(signals{1}));
 Nt = size(signals{1}, 2);
 time = (0:Nt-1) * experiment.dt;
 
-if save_all_data    
-    stride = 100;   % downsample
+if save_all_data
+    stride = 1;   % downsample
     t_idx = 1:stride:length(time);
-    t_idx = 1:stride;
     trace = squeeze(signals{1}(1, t_idx, end));
     time_ds = time(t_idx);
     
