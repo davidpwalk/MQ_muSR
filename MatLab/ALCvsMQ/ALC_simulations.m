@@ -15,13 +15,13 @@ D_parallel = 0.002;
 D_perpen = -D_parallel/2;
 
 thetas = deg2rad(linspace(0, 90, 200));
-thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
+% thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
 % thetas = deg2rad([45]);
 phis = deg2rad([0]); % Phi has no impact on the spectra
 
 % Range of B0
 magnetic_fields = linspace(1.82, 1.98, 800);
-% magnetic_fields = [1.9];
+% magnetic_fields = [1.82, 1.8922];
 
 % the system
 system.sqn=[0.5 0.5];       % spin quantum numbers
@@ -179,7 +179,7 @@ time = (0:Nt-1) * experiment.dt;
 if save_all_data
     stride = 1;   % downsample
     t_idx = 1:stride:length(time);
-    trace = squeeze(signals{1}(1, t_idx, 400));
+    trace = squeeze(signals{1}(1, t_idx, 1));
     time_ds = time(t_idx);
     
     fig = figure('NumberTitle','off','Name','Time-Domain Spectrum Pz');
@@ -188,7 +188,7 @@ if save_all_data
     xlabel('Time / ns')
     ylabel('Polarization')
 
-    % save('ALC_signal_time_evolution_on_resonance.mat', 'trace', 'time_ds')
+    % save('Data/ALC_signal_time_evolution_off_resonance.mat', 'trace', 'time_ds')
 end
 
 %% 
@@ -303,10 +303,8 @@ legend(legendStrings, 'Location', 'best')
 % plot(peak_positions(:, 1), peak_positions(:, 2))
 % hold off;
 %% Integrate over thetas
-
 weights = sin(thetas);
 powder_spectrum = zeros(Nfields, 1);
-% TODO: check if the weighted sum is actually calculated correctly
 for ii = 1:Nfields
     powder_spectrum(ii) = sum(weights * spectra(:, det_op, ii))/sum(weights);
 end
@@ -317,7 +315,7 @@ plot(magnetic_fields, powder_spectrum)
 xlabel('B / T')
 ylabel('P_z')
 
-% save('Data/num_ALC_simulation_powder', 'magnetic_fields', "powder_spectrum")
+% save('Data/num_ALC_simulation_powder_test.mat', 'magnetic_fields', "powder_spectrum")
 
 %% Compare peak positions to analytical counterpart
 

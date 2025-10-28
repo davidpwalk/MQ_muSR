@@ -31,7 +31,8 @@ gen_all_signals = False
 
 # Magnetic field range (in Tesla)
 magnetic_fields = np.linspace(0, 5, 100)
-magnetic_fields = [5]
+magnetic_fields = [0, 0.01, 5]
+# magnetic_fields = [0.05]
 
 # Zeeman (gamma / GHz/T)
 ge = 28.02495
@@ -135,9 +136,10 @@ for ii, T_lab in enumerate(T_labs):
         for kk in range(len(energies)):
             for ll in range(kk + 1, len(energies)):
                 amp = abs(O_eigen[kk, ll]) ** 2
-                ttype = classify_transition(ll + 1, kk + 1)
+                ttype = classify_transition(kk + 1, ll + 1)
                 # print(f'ttype: {ttype}, kk: {kk+1}, ll: {ll+1}, amp: {amp}, O: \n{O_eigen}') if ttype == 'DQ' or ttype == 'ZQ' else None
                 # print(f'theta: {np.degrees(thetas[ii])}, energies: {energies}, \n T_lab: {T_lab}')
+                print(ttype, kk+1, ll+1)
                 if amp > threshold:
                     freqs.append(abs(energies[ll] - energies[kk]))
                     amps.append(amp)
@@ -191,10 +193,10 @@ else:
     print("No filename provided. Results not saved to file.")
 
 #%% Plotting single spectra
-B = magnetic_fields[5]  # Tesla
-theta = thetas[50]  # degrees
-fig = time_signal(results, theta, B)
-fig.update_layout(xaxis_range=[0, 30])
+B = magnetic_fields[0]  # Tesla
+theta = thetas[0]  # degrees
+# fig = time_signal(results, theta, B)
+# fig.update_layout(xaxis_range=[0, 30])
 # fig.show()
 
 fig = stick_spectrum(results, theta, B, transition_type=None)
@@ -206,11 +208,11 @@ fig.show()
 # fig.write_html('../../Figures/ALC_simulations/TF_B10_OIx_D2MHz.html')
 
 #%% Calculate and plot powder signals
-B = 0  # Tesla
-B = magnetic_fields[99]
+B = 5  # Tesla
+# B = magnetic_fields[99]
 print(B)
 
-powder_signals_df = generate_powder_signals(results, time, magnetic_field=B, transition_filter=['SQE', 'SQMu'], make_plot=True)
+powder_signals_df = generate_powder_signals(results, time, magnetic_field=B, transition_filter=None, make_plot=True)
 
 powder_signal = powder_signals_df['Total'].values
 time = powder_signals_df.index.values
@@ -286,3 +288,84 @@ fig.update_layout(
 )
 # fig.show(renderer='browser')
 # fig.write_html('../../Figures/ALC_simulations/TF_B_dependence.html')
+
+#%%
+def plot_powder_histogram(results, transition_filter=None, B=0.0, bins=300, normalize=True):
+    """
+    Plot a rudimentary powder spectrum as a histogram of frequency components.
+
+    Parameters
+    ----------
+    results : xr.Dataset
+        Simulation dataset with variables 'frequencies', 'amplitudes', and 'theta'.
+    transition_filter : list[str], optional
+        List of transition types to include, if None, all transition types are included.
+    B : float
+        Magnetic field value to select (in Tesla).
+    bins : int
+        Number of histogram bins.
+    normalize : bool
+        Normalize the histogram to its maximum.
+
+    Returns
+    -------
+    fig : plotly.graph_objects.Figure
+        Interactive histogram figure.
+    """
+
+    # Select data at given magnetic field
+    sel = results.sel(B=B)
+
+    freqs = sel['frequencies'].values
+    amps = sel['amplitudes'].values
+    ttypes = sel['transition_types'].values
+    thetas = np.radians(sel['theta'].values)
+
+    mask = ~np.isnan(freqs)
+    freqs = freqs[mask]
+    amps = amps[mask]
+    ttypes = ttypes[mask]
+
+    if transition_filter is not None:
+        mask = np.isin(ttypes, transition_filter)
+        freqs, amps, ttypes = freqs[mask], amps[mask], ttypes[mask]
+
+    # sin(theta) weights normalized to sum to 1
+    sin_weights = np.sin(thetas)
+    sin_weights /= sin_weights.sum()
+
+    # Repeat sin(theta) weights for all transitions per angle
+    n_theta, n_trans = sel['frequencies'].shape
+    theta_weights = np.repeat(sin_weights, n_trans)
+
+    # Mask same as for freqs
+    theta_weights = theta_weights[~np.isnan(sel['frequencies'].values.flatten())]
+
+    # If the filter removed some entries, adjust accordingly
+    if len(theta_weights) != len(amps):
+        theta_weights = theta_weights[:len(amps)]
+
+    weights = amps * theta_weights
+
+    hist, bin_edges = np.histogram(freqs, bins=bins, weights=weights)
+    centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
+
+    if normalize and np.max(hist) > 0:
+        hist /= np.max(hist)
+
+    # Plot
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=centers, y=hist, mode='lines', line=dict(width=2)))
+    fig.update_layout(
+        title=f"Powder histogram spectrum @ B = {B:.2f} T",
+        xaxis_title="Frequency / GHz",
+        yaxis_title="Relative Intensity",
+        template="DemonLab",
+        margin=dict(t=75),
+    )
+
+    return fig
+
+fig = plot_powder_histogram(results, transition_filter=None, B=0.05)
+fig.show()
+
