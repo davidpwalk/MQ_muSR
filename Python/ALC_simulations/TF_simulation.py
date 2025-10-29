@@ -31,8 +31,8 @@ gen_all_signals = False
 
 # Magnetic field range (in Tesla)
 magnetic_fields = np.linspace(0, 5, 100)
-magnetic_fields = [0, 0.01, 5]
-# magnetic_fields = [0.05]
+# magnetic_fields = [0, 0.01, 5]
+magnetic_fields = [0.1, 1]
 
 # Zeeman (gamma / GHz/T)
 ge = 28.02495
@@ -41,7 +41,6 @@ gmu = -0.1355
 # Coupling constants (in GHz) and rotation angle (in degrees)
 # A_iso = 0.5148
 A_iso = 0.0
-# A_iso = 0.002
 D_parallel = 0.03
 # D_parallel = 0
 D_perp = -D_parallel/2
@@ -84,8 +83,8 @@ for theta in thetas:
 
 #%% Simulation
 # Settings
-O = Ix  # observable
-O_string = 'Ix'
+O = Sx  # observable
+O_string = 'Sx'
 threshold = 1e-4  # amplitude threshold for transitions
 # TODO: change filter to so all signals are saved and filter only at plotting stage
 
@@ -208,7 +207,7 @@ fig.show()
 # fig.write_html('../../Figures/ALC_simulations/TF_B10_OIx_D2MHz.html')
 
 #%% Calculate and plot powder signals
-B = 5  # Tesla
+B = 0.1  # Tesla
 # B = magnetic_fields[99]
 print(B)
 
@@ -369,3 +368,30 @@ def plot_powder_histogram(results, transition_filter=None, B=0.0, bins=300, norm
 fig = plot_powder_histogram(results, transition_filter=None, B=0.05)
 fig.show()
 
+#%% Make pandas df for data exploration
+B_selected = 0.1  # example magnetic field (in Tesla)
+sel = results.sel(B=B_selected)
+
+# Extract arrays
+freqs = sel["frequencies"].values        # shape: (n_theta, n_transition)
+amps = sel["amplitudes"].values
+types = sel["transition_types"].values   # same shape, dtype object
+thetas = sel["theta"].values
+
+# Collect unique transition type labels
+unique_types = np.unique(types[~pd.isna(types)])
+
+# Initialize empty DataFrames
+freq_df = pd.DataFrame(index=thetas, columns=unique_types)
+amp_df = pd.DataFrame(index=thetas, columns=unique_types)
+freq_df.index.name = "theta"
+amp_df.index.name = "theta"
+
+# Fill each DataFrame
+for i, theta in enumerate(thetas):
+    for j in range(freqs.shape[1]):
+        ttype = types[i, j]
+        if ttype is None or (isinstance(ttype, float) and np.isnan(ttype)):
+            continue
+        freq_df.loc[theta, ttype] = freqs[i, j]
+        amp_df.loc[theta, ttype] = amps[i, j]
