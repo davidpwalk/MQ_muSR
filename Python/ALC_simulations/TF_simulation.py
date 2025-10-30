@@ -32,7 +32,7 @@ gen_all_signals = False
 # Magnetic field range (in Tesla)
 magnetic_fields = np.linspace(0, 5, 100)
 # magnetic_fields = [0, 0.01, 5]
-magnetic_fields = [0.1, 1]
+magnetic_fields = [0.1]
 
 # Zeeman (gamma / GHz/T)
 ge = 28.02495
@@ -46,9 +46,10 @@ D_parallel = 0.03
 D_perp = -D_parallel/2
 
 # Rotation angles (in degrees)
-thetas = np.radians(np.linspace(0, 90, 1600, dtype=np.float64))
-# thetas = np.radians([0, 45, 90, 180])
-# thetas = np.radians([45])
+thetas_deg = np.linspace(0, 90, 1600, dtype=np.float64)
+# thetas_deg = [0, 45, 90, 180]
+# thetas_deg = [0]
+thetas = np.radians(thetas_deg)
 
 # Define the spin operators for S=1/2 and I=1/2
 S = 0.5
@@ -86,7 +87,6 @@ for theta in thetas:
 O = Sx  # observable
 O_string = 'Sx'
 threshold = 1e-4  # amplitude threshold for transitions
-# TODO: change filter to so all signals are saved and filter only at plotting stage
 
 time = np.linspace(0, 8000, 32000)
 n_theta = len(thetas)
@@ -101,9 +101,23 @@ frequencies_arr = np.full((n_theta, n_B, max_transitions), np.nan)
 amplitudes_arr = np.full((n_theta, n_B, max_transitions), np.nan)
 ttypes_arr = np.full((n_theta, n_B, max_transitions), None, dtype=object)
 
-transition_types = ["SQMu", "SQE", "ZQ", "DQ"]
+transition_types = ["SQMu_a", "SQMu_b", "SQE_a", "SQE_b", "ZQ", "DQ"]
 
-# TODO: fix error where merging transitions leads to error in signal calculation
+def classify_transition(i, j):
+    pair = {i, j}
+    if pair == {1, 4}:
+        return "DQ"
+    elif pair == {2, 3}:
+        return "ZQ"
+    elif pair == {1, 2}:
+        return "SQMu_a"
+    elif pair == {3, 4}:
+        return "SQMu_b"
+    elif pair == {1, 3}:
+        return "SQE_a"
+    elif pair == {2, 4}:
+        return "SQE_b"
+
 for ii, T_lab in enumerate(T_labs):
     for jj, magnetic_field in enumerate(magnetic_fields):
         nu_muon = gmu * magnetic_field
@@ -132,18 +146,23 @@ for ii, T_lab in enumerate(T_labs):
         freqs = []
         amps = []
         ttypes = []
+        # print(f'O: \n{O_eigen}')
         for kk in range(len(energies)):
             for ll in range(kk + 1, len(energies)):
                 amp = abs(O_eigen[kk, ll]) ** 2
                 ttype = classify_transition(kk + 1, ll + 1)
+                # print(f'ttype: {ttype}, kk: {kk + 1}, ll: {ll + 1}, amp: {amp}')
                 # print(f'ttype: {ttype}, kk: {kk+1}, ll: {ll+1}, amp: {amp}, O: \n{O_eigen}') if ttype == 'DQ' or ttype == 'ZQ' else None
                 # print(f'theta: {np.degrees(thetas[ii])}, energies: {energies}, \n T_lab: {T_lab}')
-                print(ttype, kk+1, ll+1)
+                # print(ttype, kk+1, ll+1)
+                ttype = classify_transition(ll + 1, kk + 1)
+                ttypes.append(ttype)
                 if amp > threshold:
-                    freqs.append(abs(energies[ll] - energies[kk]))
+                    freqs.append(energies[ll] - energies[kk])
                     amps.append(amp)
-                    ttype = classify_transition(ll + 1, kk + 1)
-                    ttypes.append(ttype)
+                else:
+                    freqs.append(np.nan)
+                    amps.append(np.nan)
 
         # store frequencies/amplitudes (pad with NaN if fewer than max_transitions)
         # freqs, amps, ttypes = merge_transitions(freqs, amps, ttypes)
@@ -153,7 +172,6 @@ for ii, T_lab in enumerate(T_labs):
         amplitudes_arr[ii, jj, :n_trans] = amps
         ttypes_arr[ii, jj, :n_trans] = ttypes
 
-# Wrap into Dataset
 results = xr.Dataset(
     {
         "energies": (["theta", "B", "level"], energies_arr),
@@ -163,7 +181,7 @@ results = xr.Dataset(
     },
     coords={
         "transition_type": transition_types,
-        "theta": np.degrees(thetas),
+        "theta": thetas_deg,
         "B": magnetic_fields,
         "time": time,
         "level": np.arange(4),
@@ -193,15 +211,16 @@ else:
 
 #%% Plotting single spectra
 B = magnetic_fields[0]  # Tesla
-theta = thetas[0]  # degrees
+theta = np.degrees(thetas[0])  # degrees
 # fig = time_signal(results, theta, B)
 # fig.update_layout(xaxis_range=[0, 30])
 # fig.show()
 
 fig = stick_spectrum(results, theta, B, transition_type=None)
 fig.update_layout(
-    title=f'TF muSR @ θ = {theta}°, B = {B:.2f} T, O = {O_string}',
+    title=f'TF muSR @ θ = {theta:.2f}°, B = {B:.2f} T, O = {O_string}',
     margin=dict(t=75),
+    showlegend=True,
 )
 fig.show()
 # fig.write_html('../../Figures/ALC_simulations/TF_B10_OIx_D2MHz.html')
@@ -211,7 +230,7 @@ B = 0.1  # Tesla
 # B = magnetic_fields[99]
 print(B)
 
-powder_signals_df = generate_powder_signals(results, time, magnetic_field=B, transition_filter=None, make_plot=True)
+powder_signals_df = generate_powder_signals(results, time, magnetic_field=B, transition_filter=['SQE_a', 'SQE_b'], make_plot=True)
 
 powder_signal = powder_signals_df['Total'].values
 time = powder_signals_df.index.values
@@ -221,20 +240,20 @@ time = powder_signals_df.index.values
 # #%% Plot powder spectra
 fig, freq = plot_powder_spectrum(powder_signal, time, verbose=True)
 fig.update_yaxes(automargin=True)
-fig.update_layout(title=f'Powder spectrum @ B = {B:.2f} T, O = {O_string}',
+fig.update_layout(title=f'powspec @ B = {B:.2f} T, O = {O_string}, T={D_parallel*1000:.0f} MHz',
                   margin=dict(t=75),)
 fig.show()
 # fig.write_html(f'../../Figures/ALC_simulations/TF_powder_spectrum_thin_pake_pattern_{B}T_Ix_Sx.html')
 #%% Plot angular dependence of spectra at fixed B
-B = 1  # Tesla
-thetas = np.linspace(0, 90, 6)
+B = 0.1  # Tesla
+thetas = np.linspace(0, 90, 12)
 colors = px.colors.qualitative.G10[:len(thetas)]
 
 # Create a common figure
 fig = go.Figure()
 
-for theta, color in zip(thetas, colors):
-    subfig = stick_spectrum(theta, B=B)
+for theta, color in zip(thetas_deg, colors):
+    subfig = stick_spectrum(results=results, theta=theta, B=B)
     for trace in subfig.data:
         # Only modify style of the line traces
         if trace.mode == "lines":
@@ -253,8 +272,9 @@ fig.update_layout(
     title=f'Angular dependence of muSR spectrum at B = {B} T',
     template="DemonLab",
     legend=dict(y=0.5, x=1.02, xanchor="left", yanchor="middle"),
+    showlegend=True,
 )
-# fig.show(renderer='browser')
+fig.show(renderer='browser')
 # fig.write_html('../../Figures/ALC_simulations/TF_angular_dependence.html')
 
 #%% Plot B dependence of spectra at fixed angle
@@ -365,7 +385,7 @@ def plot_powder_histogram(results, transition_filter=None, B=0.0, bins=300, norm
 
     return fig
 
-fig = plot_powder_histogram(results, transition_filter=None, B=0.05)
+fig = plot_powder_histogram(results, transition_filter=['ZQ', 'DQ'], B=0.1)
 fig.show()
 
 #%% Make pandas df for data exploration

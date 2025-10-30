@@ -13,10 +13,14 @@ def classify_transition(i, j):
         return "DQ"
     elif pair == {2, 3}:
         return "ZQ"
-    elif pair == {1, 2} or pair == {2, 4}:
-        return "SQE"
-    elif pair == {1, 3} or pair == {3, 4}:
-        return "SQMu"
+    elif pair == {1, 2}:
+        return "SQMu_a"
+    elif pair == {3, 4}:
+        return "SQMu_b"
+    elif pair == {1, 3}:
+        return "SQE_a"
+    elif pair == {2, 4}:
+        return "SQE_b"
 
 
 def merge_transitions(freqs, amps, types, tol=1e-8, zero_tol=1e-12):
