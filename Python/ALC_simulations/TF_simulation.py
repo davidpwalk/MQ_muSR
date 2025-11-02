@@ -10,7 +10,7 @@ import xarray as xr
 import os
 import warnings
 
-from Python.jacobi_math import jacobi
+from Python.diagonalizer import diagonalize_ordered
 
 # Import utility functions
 from Python.ALC_simulations.utils import *
@@ -30,9 +30,9 @@ desc = 'TF NMR simulation for S=1/2, I=1/2 system with isotropic hyperfine coupl
 gen_all_signals = False
 
 # Magnetic field range (in Tesla)
-magnetic_fields = np.linspace(0, 5, 100)
+magnetic_fields = np.linspace(0, 0.1, 400)
 # magnetic_fields = [0, 0.01, 5]
-magnetic_fields = [0.1]
+# magnetic_fields = [5]
 
 # Zeeman (gamma / GHz/T)
 ge = 28.02495
@@ -40,15 +40,15 @@ gmu = -0.1355
 
 # Coupling constants (in GHz) and rotation angle (in degrees)
 # A_iso = 0.5148
-A_iso = 0.0
-D_parallel = 0.03
-# D_parallel = 0
+A_iso = 1
+# D_parallel = 0.002
+D_parallel = 1
 D_perp = -D_parallel/2
 
 # Rotation angles (in degrees)
-thetas_deg = np.linspace(0, 90, 1600, dtype=np.float64)
+# thetas_deg = np.linspace(0, 90, 1600, dtype=np.float64)
 # thetas_deg = [0, 45, 90, 180]
-# thetas_deg = [0]
+thetas_deg = [45]
 thetas = np.radians(thetas_deg)
 
 # Define the spin operators for S=1/2 and I=1/2
@@ -84,8 +84,8 @@ for theta in thetas:
 
 #%% Simulation
 # Settings
-O = Sx  # observable
-O_string = 'Sx'
+O = Sx+Ix  # observable
+O_string = 'Sx+Ix'
 threshold = 1e-4  # amplitude threshold for transitions
 
 time = np.linspace(0, 8000, 32000)
@@ -103,22 +103,9 @@ ttypes_arr = np.full((n_theta, n_B, max_transitions), None, dtype=object)
 
 transition_types = ["SQMu_a", "SQMu_b", "SQE_a", "SQE_b", "ZQ", "DQ"]
 
-def classify_transition(i, j):
-    pair = {i, j}
-    if pair == {1, 4}:
-        return "DQ"
-    elif pair == {2, 3}:
-        return "ZQ"
-    elif pair == {1, 2}:
-        return "SQMu_a"
-    elif pair == {3, 4}:
-        return "SQMu_b"
-    elif pair == {1, 3}:
-        return "SQE_a"
-    elif pair == {2, 4}:
-        return "SQE_b"
-
 for ii, T_lab in enumerate(T_labs):
+    prev_vecs = None  # for tracking eigenvector continuity (reset for each theta)
+
     for jj, magnetic_field in enumerate(magnetic_fields):
         nu_muon = gmu * magnetic_field
         nu_electron = ge * magnetic_field
@@ -135,10 +122,14 @@ for ii, T_lab in enumerate(T_labs):
 
         H_tot = H_zeeman + H_iso + H_dip
 
+        if prev_vecs is None:
+            prev_vecs = np.eye(H_tot.shape[0], dtype=complex)
+
         # Diagonalize the Hamiltonian using the Jacobi method (H_tot needs to be converted from Qobj to ndarray)
-        energies, psi = jacobi(np.real(H_tot.full()))
+        energies, psi = diagonalize_ordered(np.real(H_tot.full()), prev_vecs=prev_vecs)
 
         energies_arr[ii, jj, :] = energies
+        prev_vecs = psi
 
         O_dense = O.full()
         O_eigen = psi.conj().T @ O_dense @ psi
@@ -415,3 +406,21 @@ for i, theta in enumerate(thetas):
             continue
         freq_df.loc[theta, ttype] = freqs[i, j]
         amp_df.loc[theta, ttype] = amps[i, j]
+
+#%% Make pandas data frame for energy levels for B dependent energy level plot
+theta = 45  # degrees
+
+sel = results['energies'].sel(theta=theta)
+
+energy_df = pd.DataFrame(
+    sel.values,
+    index=sel['B'].values,
+)
+
+# energy_df.to_csv('Python/ALC_simulations/Data/energy_levels_A_iso_1GHz.csv')
+
+fig = px.line(energy_df, x=energy_df.index, y=energy_df.columns,)
+# write_html('Figures/TF_simulations/energy_levels_A_iso_1GHz_T_1GHz.html')
+fig.show('browser')
+
+
