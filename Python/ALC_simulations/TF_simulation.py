@@ -42,13 +42,13 @@ gmu = -0.1355
 # A_iso = 0.5148
 A_iso = 1
 # D_parallel = 0.002
-D_parallel = 1
+D_parallel = 0
 D_perp = -D_parallel/2
 
 # Rotation angles (in degrees)
 # thetas_deg = np.linspace(0, 90, 1600, dtype=np.float64)
 # thetas_deg = [0, 45, 90, 180]
-thetas_deg = [45]
+thetas_deg = [0, 45, 90]
 thetas = np.radians(thetas_deg)
 
 # Define the spin operators for S=1/2 and I=1/2
@@ -84,8 +84,8 @@ for theta in thetas:
 
 #%% Simulation
 # Settings
-O = Sx+Ix  # observable
-O_string = 'Sx+Ix'
+O = Ix  # observable
+O_string = 'Ix'
 threshold = 1e-4  # amplitude threshold for transitions
 
 time = np.linspace(0, 8000, 32000)
@@ -408,7 +408,7 @@ for i, theta in enumerate(thetas):
         amp_df.loc[theta, ttype] = amps[i, j]
 
 #%% Make pandas data frame for energy levels for B dependent energy level plot
-theta = 45  # degrees
+theta = 0  # degrees
 
 sel = results['energies'].sel(theta=theta)
 
@@ -419,8 +419,12 @@ energy_df = pd.DataFrame(
 
 # energy_df.to_csv('Python/ALC_simulations/Data/energy_levels_A_iso_1GHz.csv')
 
-fig = px.line(energy_df, x=energy_df.index, y=energy_df.columns,)
-# write_html('Figures/TF_simulations/energy_levels_A_iso_1GHz_T_1GHz.html')
+# A_iso and D_parallel are in GHz
+fig = px.line(energy_df, x=energy_df.index, y=energy_df.columns, title=f'A={A_iso}, T={D_parallel}, O: {O_string}, θ={theta}°')
+fig.update_layout(
+    margin=dict(t=45),
+)
+# fig.write_html(f'Figures/TF_simulations/energy_levels_A_iso_{A_iso}GHz_T_{D_parallel}GHz_theta{theta}.html')
 fig.show('browser')
 
 
