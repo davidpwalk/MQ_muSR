@@ -30,25 +30,25 @@ desc = 'TF NMR simulation for S=1/2, I=1/2 system with isotropic hyperfine coupl
 gen_all_signals = False
 
 # Magnetic field range (in Tesla)
-magnetic_fields = np.linspace(0, 0.1, 400)
+# magnetic_fields = np.linspace(0, 0.1, 400)
 # magnetic_fields = [0, 0.01, 5]
-# magnetic_fields = [5]
+magnetic_fields = [0]
 
 # Zeeman (gamma / GHz/T)
-ge = 28.02495
-gmu = -0.1355
+ge = -28.02495
+gmu = 0.1355
 
 # Coupling constants (in GHz) and rotation angle (in degrees)
 # A_iso = 0.5148
-A_iso = 1
+A_iso = 0.002
 # D_parallel = 0.002
 D_parallel = 0
 D_perp = -D_parallel/2
 
 # Rotation angles (in degrees)
 # thetas_deg = np.linspace(0, 90, 1600, dtype=np.float64)
-# thetas_deg = [0, 45, 90, 180]
-thetas_deg = [0, 45, 90]
+# thetas_deg = [0, 45, 90]
+thetas_deg = [0]
 thetas = np.radians(thetas_deg)
 
 # Define the spin operators for S=1/2 and I=1/2
@@ -214,14 +214,18 @@ fig.update_layout(
     showlegend=True,
 )
 fig.show()
-# fig.write_html('../../Figures/ALC_simulations/TF_B10_OIx_D2MHz.html')
+print(os.getcwd())
+# fig.write_html('Figures/TF_simulations/TF_ZF_OIx_A2MHz.html')
 
 #%% Calculate and plot powder signals
 B = 0.1  # Tesla
 # B = magnetic_fields[99]
 print(B)
+transition_filter = None
+# transition_filter = ['ZQ', 'DQ']
+transition_filter = ['SQMu_a', 'SQMu_b', 'SQE_a', 'SQE_b']
 
-powder_signals_df = generate_powder_signals(results, time, magnetic_field=B, transition_filter=['SQE_a', 'SQE_b'], make_plot=True)
+powder_signals_df = generate_powder_signals(results, time, magnetic_field=B, transition_filter=transition_filter, make_plot=True)
 
 powder_signal = powder_signals_df['Total'].values
 time = powder_signals_df.index.values
