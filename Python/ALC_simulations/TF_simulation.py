@@ -30,9 +30,9 @@ desc = 'TF NMR simulation for S=1/2, I=1/2 system with isotropic hyperfine coupl
 gen_all_signals = False
 
 # Magnetic field range (in Tesla)
-# magnetic_fields = np.linspace(0, 0.1, 400)
+magnetic_fields = np.linspace(0, 0.1, 400)
 # magnetic_fields = [0, 0.01, 5]
-magnetic_fields = [0]
+# magnetic_fields = [0]
 
 # Zeeman (gamma / GHz/T)
 ge = -28.02495
@@ -40,15 +40,15 @@ gmu = 0.1355
 
 # Coupling constants (in GHz) and rotation angle (in degrees)
 # A_iso = 0.5148
-A_iso = 0.002
+A_iso = 0
 # D_parallel = 0.002
-D_parallel = 0
+D_parallel = 1
 D_perp = -D_parallel/2
 
 # Rotation angles (in degrees)
 # thetas_deg = np.linspace(0, 90, 1600, dtype=np.float64)
 # thetas_deg = [0, 45, 90]
-thetas_deg = [0]
+thetas_deg = [45]
 thetas = np.radians(thetas_deg)
 
 # Define the spin operators for S=1/2 and I=1/2
@@ -84,8 +84,8 @@ for theta in thetas:
 
 #%% Simulation
 # Settings
-O = Ix  # observable
-O_string = 'Ix'
+O = Sx+Ix  # observable
+O_string = 'Sx+Ix'
 threshold = 1e-4  # amplitude threshold for transitions
 
 time = np.linspace(0, 8000, 32000)
@@ -413,7 +413,7 @@ for i, theta in enumerate(thetas):
         amp_df.loc[theta, ttype] = amps[i, j]
 
 #%% Make pandas data frame for energy levels for B dependent energy level plot
-theta = 0  # degrees
+theta = 45  # degrees
 
 sel = results['energies'].sel(theta=theta)
 
