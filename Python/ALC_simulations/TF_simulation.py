@@ -209,21 +209,22 @@ theta = np.degrees(thetas[0])  # degrees
 
 fig = stick_spectrum(results, theta, B, transition_type=None)
 fig.update_layout(
-    title=f'TF muSR @ θ = {theta:.2f}°, B = {B:.2f} T, O = {O_string}',
+    title=f'TF muSR @ θ = {theta:.0f}°, B = {B:.0f} T, O = {O_string}',
     margin=dict(t=75),
     showlegend=True,
 )
 fig.show()
 print(os.getcwd())
-# fig.write_html('Figures/TF_simulations/TF_ZF_OIx_A2MHz.html')
+fig.write_html(f'Figures/TF_simulations/TF_ZF_O{O_string}_A{A_iso}_T{D_parallel}.html')
 
 #%% Calculate and plot powder signals
-B = 0.1  # Tesla
+B = 10  # Tesla
 # B = magnetic_fields[99]
-print(B)
+print(f'B = {B} T')
 transition_filter = None
 # transition_filter = ['ZQ', 'DQ']
-transition_filter = ['SQMu_a', 'SQMu_b', 'SQE_a', 'SQE_b']
+# transition_filter = ['SQMu_a', 'SQMu_b', 'SQE_a', 'SQE_b']
+# transition_filter = ['SQE_a']
 
 powder_signals_df = generate_powder_signals(results, time, magnetic_field=B, transition_filter=transition_filter, make_plot=True)
 
@@ -238,7 +239,7 @@ fig.update_yaxes(automargin=True)
 fig.update_layout(title=f'powspec @ B = {B:.2f} T, O = {O_string}, T={D_parallel*1000:.0f} MHz',
                   margin=dict(t=75),)
 fig.show()
-# fig.write_html(f'../../Figures/ALC_simulations/TF_powder_spectrum_thin_pake_pattern_{B}T_Ix_Sx.html')
+# fig.write_html(f'Figures/TF_simulations/TF_powder_spectrum_B{B}_O{O_string}_filter{transition_filter}.html')
 #%% Plot angular dependence of spectra at fixed B
 B = 0.1  # Tesla
 thetas = np.linspace(0, 90, 12)
@@ -384,7 +385,7 @@ fig = plot_powder_histogram(results, transition_filter=['ZQ', 'DQ'], B=0.1)
 fig.show()
 
 #%% Make pandas df for data exploration
-B_selected = 0.1  # example magnetic field (in Tesla)
+B_selected = 10  # example magnetic field (in Tesla)
 sel = results.sel(B=B_selected)
 
 # Extract arrays

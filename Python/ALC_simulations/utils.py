@@ -236,7 +236,7 @@ def stick_spectrum(results, theta, B, transition_type=None, merge_tol=1e-8):
                 x=[freq, freq],
                 y=[0, amp],
                 mode="lines",
-                name=f"{freq:.4f} GHz; {amp:.4f}; {ttype}",
+                name=f"{freq:.3f} GHz; {amp:.3f}; {ttype}",
                 line=dict(color=color),
             )
         )
