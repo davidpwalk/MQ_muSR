@@ -6,19 +6,26 @@ clear sequence
 save_all_data = false;
 
 % Zeeman (gamma / GHz/T)
-ge = 28.02495;
-gmu = -0.1355;
+ge = -28.02495;
+gmu = 0.1355;
 
 % Coupling constants (in GHz) and rotation angles (in degree)
-A_iso = 0.5148;
-D_parallel = 0.002;
+A_iso = 0.003;
+D_parallel = 0.0155;
 D_perpen = -D_parallel/2;
 
-thetas = deg2rad(linspace(0, 90, 200));
-phis = deg2rad([0]); % Phi has no impact on the spectra
+% thetas = deg2rad(linspace(0, 90, 50));
+% thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
+% thetas = deg2rad([45]);
+phis = deg2rad([45]); % Phi has no impact on the spectra
 
 % Range of B0
-magnetic_fields = linspace(1.82, 1.98, 400);
+B0 = 0.0822;
+B_start = 0;
+B_end = 0.2;
+dB = 0.00025;
+magnetic_fields = B_start : dB : B_end;
+% magnetic_fields = linspace(0, 0.16, 200);
 
 % the system
 system.sqn=[0.5 0.5];       % spin quantum numbers
@@ -28,15 +35,33 @@ system.interactions = {};
 system.init_state='ez'; % LF mode (muon in the Iz eigenstate)
 system.eq = 'init';  % equilibrium state is the same as initial state
 
+% Add relaxation (need to set options.relaxtion to 1)
+system.T1 = 2200;  % 2.2 us
+system.T2 = 2200;  % 2.2 us
+
 % Set options
 options.relaxation=0;       % tells SPIDYAN whether to include relaxation (1) or not (0)
 options.down_conversion=0;  % downconversion of signal (1) or not (0)
 options.det_op={'ez', 'ex'};
-options.labframe = 1;     % lab frame simulation is on
-% options.awg.s_rate = 10;  % can be switched on to improve accuracy (gives sampling rate of simulation in GHz)
+options.labframe = 1;       % lab frame simulation is on
+options.awg.s_rate = 5;   % gives sampling rate of simulation in GHz
 
-sequence.tp=2000.0;     % vector with event lengths in ns
-sequence.detection=ones(1,length(sequence.tp)); % detection always on
+%
+
+nu_muon = gmu*B0;
+nu_electron = ge*B0;
+
+nu_uw = abs(nu_electron);
+% nu_uw = 3000
+
+% Set sequence
+sequence.tp=16000.0 ;                            % vector with event lengths in ns
+sequence.nu1=0.95;                               % amplitude, here in mT, linearly polarized
+% sequence.nu1=[0,0.000001];                     % amplitude, here in mT, linearly polarized
+% sequence.nu1=0;                                % amplitude
+sequence.frq=nu_uw;                              % frequency of pulse
+sequence.t_rise=0;                               % rise time of chirp pulses
+sequence.detection=ones(1,length(sequence.tp));  % detection always on
 
 %-- Generation of relevant matrices --%
 Sx = sop([1/2 1/2],'xe');
@@ -48,13 +73,13 @@ Iy = sop([1/2 1/2],'ey');
 Iz = sop([1/2 1/2],'ez');
 
 % Rotation matrices
-Rz = @(phi) [cos(theta) -sin(theta) 0;
-             sin(theta)  cos(theta) 0;
-             0           0          1];
+Rz = @(phi) [cos(phi) -sin(phi) 0;
+               sin(phi)  cos(phi) 0;
+               0           0          1];
 
-Ry = @(theta) [cos(phi)  0 sin(phi);
-               0         1        0;
-               -sin(phi) 0 cos(phi)];
+Ry = @(theta) [cos(theta)  0 sin(theta);
+             0         1        0;
+             -sin(theta) 0 cos(theta)];
 
 T_principal = diag([D_perpen, D_perpen, D_parallel]);
 
@@ -97,6 +122,7 @@ end
 
 tic;
 
+% parpool('Threads')  % Start ThreadPool, threads share memory
 for k = 1:Norient
     T_lab = T_labs{k};
     temp_eigenvalues = zeros(4, Nfields);
@@ -129,14 +155,7 @@ for k = 1:Norient
                 Sy*T_lab(2,1)*Ix + Sy*T_lab(2,2)*Iy + Sy*T_lab(2,3)*Iz + ...
                 Sz*T_lab(3,1)*Ix + Sz*T_lab(3,2)*Iy + Sz*T_lab(3,3)*Iz;
 
-        % disp(H_dip)
-        % disp('before')
-        % disp(temp_system.ham)
-
-        temp_system.ham = temp_system.ham + 2*pi*(H_dip + H_iso);
-        
-        % disp('By hand')
-        % disp(temp_system.ham)
+        temp_system.ham = temp_system.ham + 2*pi*(H_dip + H_iso);  % 2pi needed cos they are in angular frequency units in spidyan
 
         temp_eigenvalues(:, n) = eig(temp_system.ham);
 
@@ -161,36 +180,42 @@ end
 
 toc;
 
-%%
-% [experiment, options] = triple(sequence, options);  % build experiment to get experiment.tp
-% 
-% signal = zeros(size(signals{1}));
-% Nt = size(signals{1}, 2);
-% time = (0:Nt-1) * experiment.dt;
-% 
-% % Integrate
-% integrals = zeros(Norient, numel(options.det_op), numel(magnetic_fields));
-% 
-% for k = 1:Norient
-%     for n = 1:Nfields
-%         % integrate over time (dimension 2)
-%         integrals(k, 1, n) = mean(real(allsignals{k,n}.sf(1,:)));
-%         integrals(k, 2, n) = mean(real(allsignals{k,n}.sf(2,:)));
-%         % squeeze(sum(real(signals{k}), 2)) / Nt;
-%     end
-% end
+%% Integrate over thetas
+weights = sin(thetas);
+powder_spectrum = zeros(Nfields, 1);
+for ii = 1:Nfields
+    powder_spectrum(ii) = sum(weights * spectra(:, det_op, ii))/sum(weights);
+end
+
+fig = figure('NumberTitle','off','Name','ALC Powder Spectrum');
+hold on
+plot(magnetic_fields, powder_spectrum)
+xlabel('B / T')
+ylabel('P_z')
+
+% save('Data/num_ALC_simulation_SrTiO3_powdedwdwdwdr.mat', 'magnetic_fields', "powder_spectrum")
 
 %% Plot time evolution of signal
-% stride = 100;   % downsample
-% t_idx = 1:stride:length(time);
-% t_idx = 1:stride;
-% trace = squeeze(signals{1}(1, t_idx, end));
-% time_ds = time(t_idx);
-% 
-% figure(343); clf; hold on
-% plot(time_ds, real(trace))
-% xlabel('Time / ns')
-% ylabel('Polarization')
+% [experiment, options] = triple(sequence, options);  % build experiment to get experiment.tp
+
+signal = zeros(size(signals{1}));
+Nt = size(signals{1}, 2);
+time = (0:Nt-1) * experiment.dt;
+
+if save_all_data
+    stride = 1;   % downsample
+    t_idx = 1:stride:length(time);
+    trace = squeeze(signals{1}(1, t_idx, 1));
+    time_ds = time(t_idx);
+    
+    fig = figure('NumberTitle','off','Name','Time-Domain Spectrum Pz');
+    hold on
+    plot(time_ds, real(trace))
+    xlabel('Time / ns')
+    ylabel('Polarization')
+
+    % save('Data/ALC_signal_time_evolution_off_resonance.mat', 'trace', 'time_ds')
+end
 
 %% 
 E_matrix = cell2mat(eigenvalues);
@@ -272,7 +297,7 @@ if save_all_data
     % xlim([-80, 80])
     xlabel('f [GHz]')
 end
-%% Plot ALC Spectra for different thetas
+%% Plot MQ Spectra for different thetas
 det_op = 1;
 peak_positions = [];
 
@@ -285,54 +310,21 @@ for ii = 1:Norient
     plot(magnetic_fields, squeeze(spectra(ii, det_op, :)))
 end
 peak_positions = [rad2deg(thetas(:)), peak_positions(:)];
-peak_positions(peak_positions(:, 2) < 1.85, :) = []; % Drop thetas where there is no peak at all
+peak_positions([1, length(thetas)], :) = [];
 hold off
 xlabel('B / T')
 ylabel('P_z')
 % xlim([1.8675, 1.9325])
 
+% save('Data/num_ALC_simulation_limit_A187.mat', 'magnetic_fields', "spectra")
+
 legendStrings = arrayfun(@(x) sprintf('\\theta = %.1f°', x), rad2deg(thetas), 'UniformOutput', false);
-legend(legendStrings, 'Location', 'best')
+legend(legendStrings, 'Location', 'right')
 
 % Use print with -painters (vector graphics) and -dpdf
 % exportgraphics(fig, 'C:\Users\walk_d\GitHub\MQ_muSR\Figures\ALC_simulations\Sim_different_theta.pdf', 'ContentType','vector','BackgroundColor','none')
 
-fig = figure('NumberTitle','off','Name','Peak Positions vs theta');
-hold on;
-plot(peak_positions(:, 1), peak_positions(:, 2))
-hold off;
-
-%% i2Dcut trial
-
-figure(101); clf;
-% pcolor(magnetic_fields, thetas, squeeze(spectra(:, det_op, :)))
-i2Dcut_nox(magnetic_fields, thetas, squeeze(spectra(:, det_op, :)).',101)
-
-%% Integrate over thetas
-
-weights = sin(thetas);
-powder_spectrum = zeros(Nfields, 1);
-% TODO: check if the weighted sum is actually calculated correctly
-for ii = 1:Nfields
-    powder_spectrum(ii) = sum(weights * spectra(:, det_op, ii))/sum(weights);
-end
-
-fig = figure('NumberTitle','off','Name','ALC Powder Spectrum');
-hold on
-plot(magnetic_fields, powder_spectrum)
-xlabel('B / T')
-ylabel('P_z')
-
-%% Compare peak positions to analytical counterpart
-
-s = load("ana_peak_positions.mat");
-ana_peak_positions = s.peak_positions;
-
-peak_positions_diff = ana_peak_positions(:, 2) - peak_positions(:, 2);
-
-fig = figure('NumberTitle','off','Name','Peak Pos difference');
-hold on
-plot(peak_positions(:, 1), peak_positions_diff)
-hold off
-
-save('peak_positions_test.mat','peak_positions', 'peak_positions_diff')
+% fig = figure('NumberTitle','off','Name','Peak Positions vs theta');
+% hold on;
+% plot(peak_positions(:, 1), peak_positions(:, 2))
+% hold off;

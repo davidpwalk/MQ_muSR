@@ -277,31 +277,29 @@ def generate_powder_signals(results, time, magnetic_field, transition_filter=Non
     transition_types = results["transition_type"].values
     thetas = np.radians(results["theta"].values)
 
+    weights = np.sin(thetas) / np.sum(np.sin(thetas))
+
     # Initialize signal accumulator
     signals = {tt: np.zeros_like(time, dtype=float) for tt in transition_types}
 
     # Iterate over all transitions
-    for theta_idx in range(freqs.shape[0]):          # theta dimension
-            for tr_idx in range(freqs.shape[1]):     # transition dimension
-                freq = freqs[theta_idx, tr_idx]
-                amp = amps[theta_idx, tr_idx]
-                ttype = ttypes[theta_idx, tr_idx]
+    for theta_idx in range(freqs.shape[0]):  # theta dimension
+        for tr_idx in range(freqs.shape[1]):  # transition dimension
+            freq = freqs[theta_idx, tr_idx]
+            amp = amps[theta_idx, tr_idx]
+            ttype = ttypes[theta_idx, tr_idx]
 
-                # Skip padded NaN entries
-                if np.isnan(freq) or np.isnan(amp) or not isinstance(ttype, str):
-                    continue
+            # Skip padded NaN entries
+            if np.isnan(freq) or np.isnan(amp) or not isinstance(ttype, str):
+                continue
 
-                if ttype not in signals:
-                    continue
+            if ttype not in signals:
+                continue
 
-                signals[ttype] += np.sin(thetas[theta_idx]) * amp * np.cos(2 * np.pi * freq * time)
+            signals[ttype] += weights[theta_idx] * amp * np.cos(2 * np.pi * freq * time)
 
     # Convert to DataFrame
     df = pd.DataFrame(signals, index=time)
-
-    norm = np.sum(np.sin(thetas))
-    for ttype in signals:
-        signals[ttype] /= norm
 
     signal_total = np.zeros_like(time, dtype=float)
 
