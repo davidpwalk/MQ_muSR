@@ -55,9 +55,8 @@ nu_uw = abs(nu_electron);
 % nu_uw = 3000
 
 % Set sequence
-sequence.tp=16000.0 ;                            % vector with event lengths in ns
-sequence.nu1=0.95;                               % amplitude, here in mT, linearly polarized
-% sequence.nu1=[0,0.000001];                     % amplitude, here in mT, linearly polarized
+sequence.tp=16000.0;                             % vector with event lengths in ns
+sequence.nu1=1.0;                                % amplitude, here in MHz, linearly polarized
 % sequence.nu1=0;                                % amplitude
 sequence.frq=nu_uw;                              % frequency of pulse
 sequence.t_rise=0;                               % rise time of chirp pulses

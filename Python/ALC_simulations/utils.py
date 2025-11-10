@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 from scipy.fft import fft, fftfreq, fftshift
 
 
+# Transition classification (it is wrong when looking at typical order of basis vectors, but this works with the diagonalizer output)
 def classify_transition(i, j):
     pair = {i, j}
     if pair == {1, 4}:
@@ -14,13 +15,13 @@ def classify_transition(i, j):
     elif pair == {2, 3}:
         return "ZQ"
     elif pair == {1, 2}:
-        return "SQMu_a"
-    elif pair == {3, 4}:
         return "SQMu_b"
+    elif pair == {3, 4}:
+        return "SQMu_a"
     elif pair == {1, 3}:
-        return "SQE_a"
-    elif pair == {2, 4}:
         return "SQE_b"
+    elif pair == {2, 4}:
+        return "SQE_a"
 
 
 def merge_transitions(freqs, amps, types, tol=1e-8, zero_tol=1e-12):
@@ -236,7 +237,7 @@ def stick_spectrum(results, theta, B, transition_type=None, merge_tol=1e-8):
                 x=[freq, freq],
                 y=[0, amp],
                 mode="lines",
-                name=f"{freq:.3f} GHz; {amp:.3f}; {ttype}",
+                name=f"{freq:.4f} GHz; {amp:.3f}; {ttype}",
                 line=dict(color=color),
             )
         )

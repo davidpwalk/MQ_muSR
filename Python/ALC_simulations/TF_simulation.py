@@ -30,9 +30,9 @@ desc = 'TF NMR simulation for S=1/2, I=1/2 system with isotropic hyperfine coupl
 gen_all_signals = False
 
 # Magnetic field range (in Tesla)
-# magnetic_fields = np.linspace(0.1, 0, 400)
+magnetic_fields = np.linspace(0, 0.01, 400)
 # magnetic_fields = [0, 0.01, 5]
-magnetic_fields = [10]
+# magnetic_fields = [0]
 
 # Zeeman (gamma / GHz/T)
 ge = -28.02495
@@ -42,13 +42,13 @@ gmu = 0.1355
 # A_iso = 0.5148
 A_iso = 0
 # D_parallel = 0.002
-D_parallel = 0.005
+D_parallel = 0.002
 D_perp = -D_parallel/2
 
 # Rotation angles (in degrees)
-thetas_deg = np.linspace(0, 90, 1600, dtype=np.float64)
+# thetas_deg = np.linspace(0, 90, 1600, dtype=np.float64)
 # thetas_deg = [0, 45, 90]
-# thetas_deg = [45]
+thetas_deg = [0]
 thetas = np.radians(thetas_deg)
 
 # Define the spin operators for S=1/2 and I=1/2
@@ -84,8 +84,8 @@ for theta in thetas:
 
 #%% Simulation
 # Settings
-O = Sx  # observable
-O_string = 'Sx'
+O = Sx+Ix  # observable
+O_string = 'Sx+Ix'
 threshold = 1e-4  # amplitude threshold for transitions
 
 time = np.linspace(0, 8000, 32000)
@@ -146,7 +146,6 @@ for ii, T_lab in enumerate(T_labs):
                 # print(f'ttype: {ttype}, kk: {kk+1}, ll: {ll+1}, amp: {amp}, O: \n{O_eigen}') if ttype == 'DQ' or ttype == 'ZQ' else None
                 # print(f'theta: {np.degrees(thetas[ii])}, energies: {energies}, \n T_lab: {T_lab}')
                 # print(ttype, kk+1, ll+1)
-                ttype = classify_transition(ll + 1, kk + 1)
                 ttypes.append(ttype)
                 if amp > threshold:
                     freqs.append(energies[ll] - energies[kk])
@@ -202,6 +201,7 @@ else:
 
 #%% Plotting single spectra
 B = magnetic_fields[0]  # Tesla
+B = 0
 theta = np.degrees(thetas[0])  # degrees
 # fig = time_signal(results, theta, B)
 # fig.update_layout(xaxis_range=[0, 30])
@@ -214,8 +214,7 @@ fig.update_layout(
     showlegend=True,
 )
 fig.show()
-print(os.getcwd())
-fig.write_html(f'Figures/TF_simulations/TF_ZF_O{O_string}_A{A_iso}_T{D_parallel}.html')
+# fig.write_html(f'Figures/TF_simulations/TF_ZF_O{O_string}_A{A_iso}_T{D_parallel}.html')
 
 #%% Calculate and plot powder signals
 B = 10  # Tesla
@@ -413,7 +412,7 @@ for i, theta in enumerate(thetas):
         amp_df.loc[theta, ttype] = amps[i, j]
 
 #%% Make pandas data frame for energy levels for B dependent energy level plot
-theta = 45  # degrees
+theta = 0  # degrees
 
 sel = results['energies'].sel(theta=theta)
 
