@@ -35,7 +35,7 @@ system.eq = 'init';  % equilibrium state is the same as initial state
 % Set options
 options.relaxation=0;       % tells SPIDYAN whether to include relaxation (1) or not (0)
 options.down_conversion=0;  % downconversion of signal (1) or not (0)
-options.det_op={'ez', 'ex'};
+options.det_op={'ez', 'ex', 'xe'};
 options.labframe = 1;       % lab frame simulation is on
 options.awg.s_rate = 5;   % gives sampling rate of simulation in GHz
 
@@ -91,7 +91,7 @@ end
 Nfields = numel(magnetic_fields);
 Nt = experiment.tp/experiment.dt + 1;
 
-det_op = 2;  % 1=ez, 2=ex
+det_op = 3;  % 1=ez, 2=ex, 3=xe
 
 eigenvalues = cell(1, Norient);
 spectra = zeros(Norient, numel(options.det_op), Nfields);
