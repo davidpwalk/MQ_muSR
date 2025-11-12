@@ -6,7 +6,7 @@
       <excludeFolder url="file://$MODULE_DIR$/MatLab" />
       <excludePattern pattern="C:/Programs/MiKTeX" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.13 (MQ_muSR)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.12 (MQ_muSR)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
