@@ -3,7 +3,7 @@ clear options
 clear sequence
 
 %-- Settings --%
-save_all_data = false;
+save_all_data = true;
 
 % Zeeman (gamma / GHz/T)
 ge = -28.02495;
@@ -16,14 +16,14 @@ D_perpen = -D_parallel/2;
 
 % thetas = deg2rad(linspace(0, 90, 50));
 % thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
-% thetas = deg2rad([45]);
+thetas = deg2rad([45]);
 phis = deg2rad([45]); % Phi has no impact on the spectra
 
 % Range of B0
 B0 = 0.0822;
-B_start = 0;
-B_end = 0.2;
-dB = 0.00025;
+B_start = 0.08;
+B_end = 0.1;
+dB = 0.0001;
 magnetic_fields = B_start : dB : B_end;
 % magnetic_fields = linspace(0, 0.16, 200);
 
@@ -200,11 +200,12 @@ ylabel('P_z')
 signal = zeros(size(signals{1}));
 Nt = size(signals{1}, 2);
 time = (0:Nt-1) * experiment.dt;
+trace_idx = 158;
 
 if save_all_data
     stride = 1;   % downsample
     t_idx = 1:stride:length(time);
-    trace = squeeze(signals{1}(1, t_idx, 1));
+    trace = squeeze(signals{1}(1, t_idx, trace_idx));
     time_ds = time(t_idx);
     
     fig = figure('NumberTitle','off','Name','Time-Domain Spectrum Pz');
@@ -213,8 +214,59 @@ if save_all_data
     xlabel('Time / ns')
     ylabel('Polarization')
 
-    % save('Data/ALC_signal_time_evolution_off_resonance.mat', 'trace', 'time_ds')
+    save('Data/MQ_signal_time_evolution_on_resonance.mat', 'trace', 'time_ds')
 end
+
+%%
+det_op = 1;
+
+% Extract matrix for chosen detector: -> [Nt x Nfields]
+signal_matrix = squeeze(signals{1}(det_op,:,:));   % Nt × Nfields
+[Nt, Ntrace] = size(signal_matrix);
+
+% time axis (ns)
+time = (0:Nt-1) * experiment.dt;
+
+% initial trace (field index) — make sure this is in 1..Ntrace
+initial_trace = min(158, Ntrace);
+
+% Create UI figure and axes
+fig = uifigure('Name', 'Time-Domain Spectrum Pz', 'NumberTitle', 'off');
+ax = uiaxes(fig, 'Position', [70 100 700 350]);
+ax.XLabel.String = 'Time / ns';
+ax.YLabel.String = 'Polarization';
+grid(ax, 'on');
+
+% Initial plot
+trace_line = plot(ax, time, real(signal_matrix(:, initial_trace)), 'LineWidth', 1.2);
+title(ax, sprintf('Trace %d', initial_trace));
+
+% Label showing current index
+idxLabel = uilabel(fig, 'Text', sprintf('Index: %d', initial_trace), ...
+    'Position', [20 60 70 22]);
+
+% Slider: use Ntrace for Limits
+slider = uislider(fig, ...
+    'Position', [120 70 580 3], ...
+    'Limits', [1 Ntrace], ...
+    'Value', initial_trace, ...
+    'MajorTicks', round(linspace(1, Ntrace, min(Ntrace, 6))), ...
+    'ValueChangedFcn', @(s,e) update_trace_callback(round(s.Value), ax, trace_line, signal_matrix, time, idxLabel) ...
+    );
+
+% --- Callback function (works in Live Editor) ---
+function update_trace_callback(idx, ax, trace_line, signal_matrix, time, idxLabel)
+    % idx is already integer
+    if idx < 1 || idx > size(signal_matrix,2)
+        return
+    end
+    trace_line.YData = real(signal_matrix(:, idx));
+    trace_line.XData = time;
+    title(ax, sprintf('Trace %d', idx));
+    idxLabel.Text = sprintf('Index: %d', idx);
+    drawnow limitrate
+end
+
 
 %% 
 E_matrix = cell2mat(eigenvalues);
