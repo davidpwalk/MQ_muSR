@@ -30,9 +30,9 @@ desc = 'TF NMR simulation for S=1/2, I=1/2 system with isotropic hyperfine coupl
 gen_all_signals = False
 
 # Magnetic field range (in Tesla)
-magnetic_fields = np.linspace(0.1, 0, 400)
+# magnetic_fields = np.linspace(0.1, 0, 400)
 # magnetic_fields = [0, 0.01, 5]
-# magnetic_fields = [10]
+magnetic_fields = [0.1]
 
 # Zeeman (gamma / GHz/T)
 ge = -28.02495
@@ -40,15 +40,15 @@ gmu = 0.1355
 
 # Coupling constants (in GHz) and rotation angle (in degrees)
 # A_iso = 0.5148
-A_iso = 1
+A_iso = 0
 # D_parallel = 0.002
-D_parallel = 0
+D_parallel = 0.03
 D_perp = -D_parallel/2
 
 # Rotation angles (in degrees)
-# thetas_deg = np.linspace(0, 90, 1600, dtype=np.float64)
+thetas_deg = np.linspace(0, 90, 1600, dtype=np.float64)
 # thetas_deg = [0, 45, 90]
-thetas_deg = [0]
+# thetas_deg = [0]
 thetas = np.radians(thetas_deg)
 
 # Define the spin operators for S=1/2 and I=1/2
@@ -86,9 +86,9 @@ for theta in thetas:
 # Settings
 O = Sx  # observable
 O_string = 'Sx'
-threshold = 1e-4  # amplitude threshold for transitions
+threshold = 1e-6  # amplitude threshold for transitions
 
-time = np.linspace(0, 8000, 32000)
+time = np.linspace(0, 8000, 64000)
 n_theta = len(thetas)
 n_B = len(magnetic_fields)
 n_time = len(time)
@@ -118,9 +118,7 @@ for ii, T_lab in enumerate(T_labs):
                 scalar = float(T_lab[a, b])
                 H_dip += scalar * (S_ops[a] * I_ops[b])
 
-        H_dip = T_lab[2, 2] * Sz * Iz  # Simplified dipolar Hamiltonian approximation
-
-        # H_dip_approx = D_parallel * Sz * Iz + D_perp * (Sx * Ix + Sy * Iy)
+        # H_dip = T_lab[2, 2] * Sz * Iz  # Simplified dipolar Hamiltonian approximation
 
         H_tot = H_zeeman + H_iso + H_dip
 
@@ -223,7 +221,7 @@ import importlib
 import Python.ALC_simulations.utils as utils
 importlib.reload(utils)
 
-B = 10  # Tesla
+B = 0.1  # Tesla
 # B = magnetic_fields[99]
 print(f'B = {B} T')
 transition_filter = None
@@ -244,7 +242,7 @@ fig.update_yaxes(automargin=True)
 fig.update_layout(title=f'powspec @ B = {B:.2f} T, O = {O_string}, T={D_parallel*1000:.0f} MHz',
                   margin=dict(t=75),)
 fig.show(renderer='browser')
-# fig.write_html(f'Figures/TF_simulations/TF_powder_spectrum_B{B}_O{O_string}_filter{transition_filter}.html')
+fig.write_html(f'Figures/TF_simulations/TF_powder_spectrum_B{B}_O{O_string}_filter{transition_filter}.html')
 #%% Plot angular dependence of spectra at fixed B
 B = 0.1  # Tesla
 thetas = np.linspace(0, 90, 12)
@@ -390,7 +388,7 @@ fig = plot_powder_histogram(results, transition_filter=['ZQ', 'DQ'], B=0.1)
 fig.show()
 
 #%% Make pandas df for data exploration
-B_selected = 10  # example magnetic field (in Tesla)
+B_selected = 0.1  # example magnetic field (in Tesla)
 sel = results.sel(B=B_selected)
 
 # Extract arrays

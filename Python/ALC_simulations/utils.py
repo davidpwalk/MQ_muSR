@@ -298,8 +298,6 @@ def generate_powder_signals(results, time, magnetic_field, transition_filter=Non
                 continue
 
             signals[ttype] += weights[theta_idx] * amp * np.cos(2 * np.pi * freq * time)
-            # signals[ttype] += amp * np.cos(2 * np.pi * freq * time)
-            print('test e')
 
     # Convert to DataFrame
     df = pd.DataFrame(signals, index=time)
