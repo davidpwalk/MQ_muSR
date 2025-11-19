@@ -4,6 +4,12 @@ clear sequence
 
 %-- Settings --%
 save_all_data = true;
+save_traces_to_disk = true;  % only applies if save_all_data=true
+save_trace_dir = 'Data/traces/test';
+
+if save_traces_to_disk && ~exist("save_trace_dir", 'dir')
+    mkdir(save_trace_dir)
+end
 
 % Zeeman (gamma / GHz/T)
 ge = -28.02495;
@@ -14,16 +20,16 @@ A_iso = 0.003;
 D_parallel = 0.0155;
 D_perpen = -D_parallel/2;
 
-% thetas = deg2rad(linspace(0, 90, 50));
+thetas = deg2rad(linspace(0, 90, 20));
 % thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
-thetas = deg2rad([45]);
-phis = deg2rad([45]); % Phi has no impact on the spectra
+% thetas = deg2rad([45]);
+phis = deg2rad([0]); % Phi has no impact on the spectra
 
 % Range of B0
 B0 = 0.0822;
-B_start = 0.08;
-B_end = 0.1;
-dB = 0.0001;
+B_start = 0.09525;
+B_end = 0.09725;
+dB = 0.000005;
 magnetic_fields = B_start : dB : B_end;
 % magnetic_fields = linspace(0, 0.16, 200);
 
@@ -35,9 +41,16 @@ system.interactions = {};
 system.init_state='ez'; % LF mode (muon in the Iz eigenstate)
 system.eq = 'init';  % equilibrium state is the same as initial state
 
-% Add relaxation (need to set options.relaxtion to 1)
-system.T1 = 2200;  % 2.2 us
-system.T2 = 2200;  % 2.2 us
+% Relaxtion matrix (e- transitions 2 us, rest 1 s)
+system.T1 = [0, 1e9,  1e9,  1e9;
+             0,   0,  1e9,  1e9;            
+             0,   0,    0,  1e9;
+             0,   0,    0,    0];
+
+system.T2 = [0, 1e9, 2000,  1e9;
+             0,   0,  1e9, 2000;            
+             0,   0,    0,  1e9;
+             0,   0,    0,    0];
 
 % Set options
 options.relaxation=0;       % tells SPIDYAN whether to include relaxation (1) or not (0)
@@ -121,7 +134,7 @@ end
 
 tic;
 
-% parpool('Threads')  % Start ThreadPool, threads share memory
+% parpool('Threads');  % Start ThreadPool, threads share memory
 for k = 1:Norient
     T_lab = T_labs{k};
     temp_eigenvalues = zeros(4, Nfields);
@@ -156,22 +169,38 @@ for k = 1:Norient
 
         temp_system.ham = temp_system.ham + 2*pi*(H_dip + H_iso);  % 2pi needed cos they are in angular frequency units in spidyan
 
-        temp_eigenvalues(:, n) = eig(temp_system.ham);
-
         [temp_state, detected_signal, ~] = homerun(temp_state, temp_system, temp_experiment, temp_options, []);
 
-        if save_all_data
-            temp_signal(:, :, n) = detected_signal.sf;
-            temp_allsignals{n} = detected_signal;
-        end
-
+        temp_eigenvalues(:, n) = eig(temp_system.ham);
         temp_integrals(:,n) = mean(real(detected_signal.sf), 2);
+
+        if save_all_data
+            if save_traces_to_disk
+                output_filename = sprintf('trace_k%03d_n%05d.mat', k, n);
+                output_path = fullfile(save_trace_dir, output_filename);
+
+                % sf = detected_signal.sf;        % time-domain signal
+
+                output.detected_signal = detected_signal.sf;
+                output.options = options;
+                
+                % Save traces to disk
+                save(output_path, "-struct", 'output', '-v7.3');
+
+                % Clear from worker’s RAM
+                % sf = [];
+                detected_signal = [];
+            else
+                temp_signal(:, :, n) = detected_signal.sf;
+                temp_allsignals{n} = detected_signal;
+            end
+        end
     end
     
     eigenvalues{k} = temp_eigenvalues;
     spectra(k,:,:) = temp_integrals;
 
-    if save_all_data
+    if save_all_data && ~save_traces_to_disk
         signals{k} = temp_signal;
         allsignals(k,:) = temp_allsignals; 
     end
@@ -181,12 +210,13 @@ toc;
 
 %% Integrate over thetas
 weights = sin(thetas);
+det_op = 1;
 powder_spectrum = zeros(Nfields, 1);
 for ii = 1:Nfields
     powder_spectrum(ii) = sum(weights * spectra(:, det_op, ii))/sum(weights);
 end
 
-fig = figure('NumberTitle','off','Name','ALC Powder Spectrum');
+fig = figure('NumberTitle','off','Name','MQ Powder Spectrum');
 hold on
 plot(magnetic_fields, powder_spectrum)
 xlabel('B / T')
@@ -226,6 +256,7 @@ signal_matrix = squeeze(signals{1}(det_op,:,:));   % Nt × Nfields
 
 % time axis (ns)
 time = (0:Nt-1) * experiment.dt;
+
 
 % initial trace (field index) — make sure this is in 1..Ntrace
 initial_trace = min(158, Ntrace);

@@ -26,13 +26,12 @@ pio.templates.default = "DemonLab"
 filename = None
 desc = 'TF NMR simulation for S=1/2, I=1/2 system with isotropic hyperfine coupling of A_iso=2 MHz, O=Ix'
 
-# TODO: maybe implement option to generate all signals (for each B and theta), this consumes ALOT of memory
 gen_all_signals = False
 
 # Magnetic field range (in Tesla)
 # magnetic_fields = np.linspace(0.1, 0, 400)
 # magnetic_fields = [0, 0.01, 5]
-magnetic_fields = [0.1]
+magnetic_fields = [10]
 
 # Zeeman (gamma / GHz/T)
 ge = -28.02495
@@ -46,10 +45,18 @@ D_parallel = 0.03
 D_perp = -D_parallel/2
 
 # Rotation angles (in degrees)
-thetas_deg = np.linspace(0, 90, 1600, dtype=np.float64)
-# thetas_deg = [0, 45, 90]
-# thetas_deg = [0]
-thetas = np.radians(thetas_deg)
+theta_grid_start = 0
+theta_grid_end = 90
+n_thetas = 10000
+
+cos_thetas = np.linspace(np.cos(np.radians(theta_grid_start)), np.cos(np.radians(theta_grid_end)), n_thetas, dtype=np.float64)
+thetas = np.arccos(cos_thetas)
+thetas_deg = np.degrees(thetas)
+
+# thetas_deg = np.linspace(54.7, 90, 1600, dtype=np.float64)
+# # thetas_deg = [0, 30, 45, 90]
+# # thetas_deg = [54.5, 90]
+# thetas = np.radians(thetas_deg)
 
 # Define the spin operators for S=1/2 and I=1/2
 S = 0.5
@@ -82,10 +89,10 @@ for theta in thetas:
     T_rot = R @ T_principal @ R.T
     T_labs.append(T_rot)
 
-#%% Simulation
+# #%% Simulation
 # Settings
-O = Sx  # observable
-O_string = 'Sx'
+O = Ix  # observable
+O_string = 'Ix'
 threshold = 1e-6  # amplitude threshold for transitions
 
 time = np.linspace(0, 8000, 64000)
@@ -199,37 +206,111 @@ if filename:
 else:
     print("No filename provided. Results not saved to file.")
 
-#%% Plotting single spectra
-B = magnetic_fields[0]  # Tesla
-B = 0
-theta = np.degrees(thetas[0])  # degrees
-# fig = time_signal(results, theta, B)
-# fig.update_layout(xaxis_range=[0, 30])
+# #%% Plotting single spectra
+# B = magnetic_fields[0]  # Tesla
+# B = 0
+# theta = np.degrees(thetas[0])  # degrees
+# # fig = time_signal(results, theta, B)
+# # fig.update_layout(xaxis_range=[0, 30])
+# # fig.show()
+#
+# fig = stick_spectrum(results, theta, B, transition_type=None)
+# fig.update_layout(
+#     title=f'TF muSR @ θ = {theta:.0f}°, B = {B:.0f} T, O = {O_string}',
+#     margin=dict(t=75),
+#     showlegend=True,
+# )
 # fig.show()
-
-fig = stick_spectrum(results, theta, B, transition_type=None)
-fig.update_layout(
-    title=f'TF muSR @ θ = {theta:.0f}°, B = {B:.0f} T, O = {O_string}',
-    margin=dict(t=75),
-    showlegend=True,
-)
-fig.show()
 # fig.write_html(f'Figures/TF_simulations/TF_ZF_O{O_string}_A{A_iso}_T{D_parallel}.html')
 
-#%% Calculate and plot powder signals
-import importlib
-import Python.ALC_simulations.utils as utils
-importlib.reload(utils)
+# #%% Calculate and plot powder signals
 
-B = 0.1  # Tesla
+
+def generate_powder_signals(results, time, magnetic_field, transition_filter=None, make_plot=False):
+    """
+    Generate time-domain signals from xarray results and return as a pandas DataFrame.
+
+    Parameters
+    ----------
+    results : xr.Dataset
+        Dataset containing 'frequencies', 'amplitudes', and 'transition_types'.
+    time : np.ndarray
+        Time vector used to reconstruct the signal.
+    magnetic_field : float
+        Magnetic field value at which to extract the signals.
+    transition_filter : list[str], optional
+        If provided, only include these transition types.
+
+    Returns
+    -------
+    pd.DataFrame
+        Columns correspond to transition types and total signal, index corresponds to time.
+    """
+    # Extract arrays
+    freqs = results["frequencies"].sel(B=magnetic_field).values
+    amps = results["amplitudes"].sel(B=magnetic_field).values
+    ttypes = results["transition_types"].sel(B=magnetic_field).values
+    transition_types = results["transition_type"].values
+    thetas = np.radians(results["theta"].values)
+
+    # weights = np.sin(thetas)
+    weights = np.sin(thetas)*0+1
+
+    # Initialize signal accumulator
+    signals = {tt: np.zeros_like(time, dtype=float) for tt in transition_types}
+
+    # Iterate over all transitions
+    for theta_idx in range(freqs.shape[0]):  # theta dimension
+        for tr_idx in range(freqs.shape[1]):  # transition dimension
+            freq = freqs[theta_idx, tr_idx]
+            amp = amps[theta_idx, tr_idx]
+            ttype = ttypes[theta_idx, tr_idx]
+
+            # Skip padded NaN entries
+            if np.isnan(freq) or np.isnan(amp) or not isinstance(ttype, str):
+                continue
+
+            if ttype not in signals:
+                continue
+
+            signals[ttype] += weights[theta_idx] * amp * np.cos(2 * np.pi * freq * time)
+
+    # Convert to DataFrame
+    df = pd.DataFrame(signals, index=time)
+
+    signal_total = np.zeros_like(time, dtype=float)
+
+    # Sum over selected transition types
+    if transition_filter is None:
+        transition_filter = transition_types
+
+    for ttype in transition_filter:
+        signal_total += df[ttype]
+
+    df['Total'] = signal_total
+    df.index.name = "time"
+
+    if make_plot:
+        fig = go.Figure()
+
+        for ttype in transition_types:
+            visibility = 'legendonly' if ttype not in transition_filter else True
+            fig.add_trace(go.Scatter(x=df.index, y=df[ttype], mode='lines', name=ttype, visible=visibility))
+
+        fig.add_trace(go.Scatter(x=df.index, y=df['Total'], mode='lines', name='Total', line=dict(color='black'), visible='legendonly'))
+
+        fig.show()
+    return df
+
+B = 10  # Tesla
 # B = magnetic_fields[99]
 print(f'B = {B} T')
 transition_filter = None
 # transition_filter = ['ZQ', 'DQ']
 # transition_filter = ['SQMu_a', 'SQMu_b', 'SQE_a', 'SQE_b']
-# transition_filter = ['SQE_a']
+transition_filter = ['SQMu_a']
 
-powder_signals_df = utils.generate_powder_signals(results, time, magnetic_field=B, transition_filter=transition_filter, make_plot=True)
+powder_signals_df = generate_powder_signals(results, time, magnetic_field=B, transition_filter=transition_filter, make_plot=False)
 
 powder_signal = powder_signals_df['Total'].values
 time = powder_signals_df.index.values
@@ -237,12 +318,20 @@ time = powder_signals_df.index.values
 # px.line(x=time, y=powder_signal).show()
 
 # #%% Plot powder spectra
-fig, freq = utils.plot_powder_spectrum(powder_signal, time, verbose=True)
+fig, freq = plot_powder_spectrum(powder_signal, time, verbose=False)
 fig.update_yaxes(automargin=True)
 fig.update_layout(title=f'powspec @ B = {B:.2f} T, O = {O_string}, T={D_parallel*1000:.0f} MHz',
                   margin=dict(t=75),)
+
 fig.show(renderer='browser')
-fig.write_html(f'Figures/TF_simulations/TF_powder_spectrum_B{B}_O{O_string}_filter{transition_filter}.html')
+# fig.write_html(f'Figures/TF_simulations/TF_powder_spectrum_B{B}_O{O_string}_filter{transition_filter}.html')
+
+#%%
+px.line(powder_signals_df, x=powder_signals_df.index, y=powder_signals_df['SQE_a']).show(renderer='browser')
+
+powder, x = ft(powder_signals_df['SQMu_b'].values, time)
+px.line(x=x, y=powder).show(renderer='browser')
+
 #%% Plot angular dependence of spectra at fixed B
 B = 0.1  # Tesla
 thetas = np.linspace(0, 90, 12)
@@ -384,11 +473,11 @@ def plot_powder_histogram(results, transition_filter=None, B=0.0, bins=300, norm
 
     return fig
 
-fig = plot_powder_histogram(results, transition_filter=['ZQ', 'DQ'], B=0.1)
+fig = plot_powder_histogram(results, transition_filter=['SQMu_a'], B=10)
 fig.show()
 
 #%% Make pandas df for data exploration
-B_selected = 0.1  # example magnetic field (in Tesla)
+B_selected = 10  # example magnetic field (in Tesla)
 sel = results.sel(B=B_selected)
 
 # Extract arrays

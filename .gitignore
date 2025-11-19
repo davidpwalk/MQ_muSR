@@ -9,6 +9,9 @@ __pycache__/
 # Matlab autosave file
 *.asv
 
+# Folder with raw data files, they are downloaded automatically anyways and dont need to be on git
+Data/
+
 # Distribution / packaging
 .Python
 build/
