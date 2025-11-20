@@ -33,7 +33,7 @@ nu1_center = 1;
 nu1_sigma = 0.1;
 nu1_start = nu1_center - 3*nu1_sigma;
 nu1_end = nu1_center + 3*nu1_sigma;
-nu1_step_size = 0.001;
+nu1_step_size = 0.3;
 nu1_vec = nu1_start:nu1_step_size:nu1_end;
 nu1_probs = exp(-((nu1_center-nu1_vec)/nu1_sigma).^2);
 nu1_probs = nu1_probs/trapz(nu1_probs);
@@ -63,9 +63,7 @@ options.relaxation=0;       % tells SPIDYAN whether to include relaxation (1) or
 options.down_conversion=0;  % downconversion of signal (1) or not (0)
 options.det_op={'ez', 'ex', 'ze'};
 options.labframe = 1;       % lab frame simulation is on
-options.awg.s_rate = 5;   % gives sampling rate of simulation in GHz
-
-%
+options.awg.s_rate = 6;   % gives sampling rate of simulation in GHz
 
 nu_muon = gmu*B0;
 nu_electron = ge*B0;
@@ -74,7 +72,7 @@ nu_uw = abs(nu_electron);
 % nu_uw = 3000
 
 % Set sequence
-tau = 32000;  % ns, length of each pulse block
+tau = 8;  % ns, length of each pulse block
 
 sequence.tp   = [tau, tau];             % two equal pulse blocks
 sequence.nu1  = [1.0, 1.0];
@@ -132,15 +130,10 @@ end
 Nfields = numel(magnetic_fields);
 Nt = sum(experiment.tp)/sum(experiment.dt) + 1;
 
-eigenvalues = cell(1, Norient);
-spectra = zeros(Norient, numel(options.det_op), Nfields);
-
-allsignals = cell(Norient, Nfields, Nt);
-
 % Array for different nu1
 inhom_array = cell(1, length(nu1_vec));
 
-all_signals = cell(Nfields, Norient, Nt);
+signals = cell(Nfields, Norient);
 
 tic;
 
@@ -177,15 +170,15 @@ for k = 1:Nfields
 
         system.ham = system.ham + 2*pi*(H_dip + H_iso);
 
-        parfor i = 1:length(nu1_vec)
+        for i = 1:length(nu1_vec)
             temp_system = system;
             temp_system.interactions{1, end} = nu1_vec(i);
 
             [temp_system, temp_state, temp_options] = setup(temp_system, options);
     
-            [temp_state, detected_signal, ~] = homerun(temp_state, temp_system, temp_experiment, temp_options, []);
+            [temp_state, detected_signal, ~] = homerun(temp_state, temp_system, experiment, temp_options, []);
     
-            inhom_array(i) = detected_signal.sf
+            inhom_array{i} = detected_signal.sf;
         end
         signal = zeros(size(inhom_array{1}));
 
@@ -195,14 +188,8 @@ for k = 1:Nfields
 
         % Store signal for one field and orientation but with added
         % inhomogenity
-        all_signals(k, n, :) = signal;
+        signals{k, n} = signal;
     end
-    
-    eigenvalues{k} = temp_eigenvalues;
-    spectra(k,:,:) = temp_integrals;
-
-    signals{k} = temp_signal;
-    allsignals(k,:) = temp_allsignals; 
 end
 
 toc;
@@ -224,11 +211,13 @@ ylabel('P_z')
 % save('Data/num_ALC_simulation_SrTiO3_powdedwdwdwdr.mat', 'magnetic_fields', "powder_spectrum")
 
 %% Plot time evolution of signal
-time = linspace(0, sum(experiment.tp), Nt));
+det_op = 1;
+orientation = 1;
+magnetic_field = 1;
 
 stride = 1;   % downsample
 t_idx = 1:stride:length(time);
-trace = squeeze(signals{1}(1, :, 1));
+trace = signals{magnetic_field, orientation}(det_op, :);
 time_ds = time(t_idx);
 
 fig = figure('NumberTitle','off','Name','Time-Domain Spectrum Pz');
