@@ -44,7 +44,7 @@ system.sqn=[0.5 0.5];       % spin quantum numbers
 
 system.interactions = {};
                      
-% system.init_state='ez'; % LF mode (muon in the Iz eigenstate)
+system.init_state='ez'; % LF mode (muon in the Iz eigenstate)
 system.eq = 'init';  % equilibrium state is the same as initial state
 
 % Relaxtion matrix (e- transitions 2 us, rest 1 s)
@@ -171,20 +171,21 @@ for k = 1:Nfields
         H_dip = Sx*T_lab(1,1)*Ix + Sx*T_lab(1,2)*Iy + Sx*T_lab(1,3)*Iz + ...
             Sy*T_lab(2,1)*Ix + Sy*T_lab(2,2)*Iy + Sy*T_lab(2,3)*Iz + ...
             Sz*T_lab(3,1)*Ix + Sz*T_lab(3,2)*Iy + Sz*T_lab(3,3)*Iz;
-
-        system.ham = system.ham + 2*pi*(H_dip + H_iso);
        
         [experiment, options] = triple(sequence, options);
+        [system, ~, ~] = setup(system, options);
+
+        system.ham = system.ham + 2*pi*(H_dip + H_iso);
 
         parfor i = 1:length(nu1_vec)
             temp_system = system;
-            temp_system.interactions{1, end} = nu1_vec{i}
+            temp_system.interactions{1, end} = nu1_vec(i);
 
             [temp_system, temp_state, temp_options] = setup(temp_system, options);
     
             [temp_state, detected_signal, ~] = homerun(temp_state, temp_system, temp_experiment, temp_options, []);
     
-            inhom_array{i} = detected_signal.sf
+            inhom_array(i) = detected_signal.sf
         end
         signal = zeros(size(inhom_array{1}));
 
