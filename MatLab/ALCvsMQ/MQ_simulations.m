@@ -3,8 +3,8 @@ clear options
 clear sequence
 
 %-- Settings --%
-save_all_data = true;
-save_traces_to_disk = true;  % only applies if save_all_data=true
+save_all_data = false;
+save_traces_to_disk = false;  % only applies if save_all_data=true
 save_trace_dir = 'Data/traces/test';
 
 if save_traces_to_disk && ~exist("save_trace_dir", 'dir')
@@ -16,20 +16,23 @@ ge = -28.02495;
 gmu = 0.1355;
 
 % Coupling constants (in GHz) and rotation angles (in degree)
-A_iso = 0.003;
+A_iso = 0;
 D_parallel = 0.0155;
 D_perpen = -D_parallel/2;
 
-thetas = deg2rad(linspace(0, 90, 20));
-% thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
-% thetas = deg2rad([45]);
+% thetas = deg2rad(linspace(0, 90, 20));
+thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
+thetas = deg2rad([45]);
 phis = deg2rad([0]); % Phi has no impact on the spectra
 
 % Range of B0
 B0 = 0.0822;
-B_start = 0.09525;
-B_end = 0.09725;
-dB = 0.000005;
+% B_start = 0.09525;
+% B_end = 0.09725;
+% dB = 0.000005;
+B_start = 0.08;
+B_end = 0.098;
+dB = 0.000025;
 magnetic_fields = B_start : dB : B_end;
 % magnetic_fields = linspace(0, 0.16, 200);
 
@@ -38,7 +41,8 @@ system.sqn=[0.5 0.5];       % spin quantum numbers
 
 system.interactions = {};
                      
-system.init_state='ez'; % LF mode (muon in the Iz eigenstate)
+% system.init_state='ez'; % LF mode (muon in the Iz eigenstate)
+system.init_state='zz'; % both e- and muon in Jz eigenstate (only SzIz occupied)
 system.eq = 'init';  % equilibrium state is the same as initial state
 
 % Relaxtion matrix (e- transitions 2 us, rest 1 s)
@@ -53,11 +57,11 @@ system.T2 = [0, 1e9, 2000,  1e9;
              0,   0,    0,    0];
 
 % Set options
-options.relaxation=0;       % tells SPIDYAN whether to include relaxation (1) or not (0)
+options.relaxation=1;       % tells SPIDYAN whether to include relaxation (1) or not (0)
 options.down_conversion=0;  % downconversion of signal (1) or not (0)
-options.det_op={'ez', 'ex'};
+options.det_op={'ez', 'ex', 'ze'};
 options.labframe = 1;       % lab frame simulation is on
-options.awg.s_rate = 5;   % gives sampling rate of simulation in GHz
+options.awg.s_rate = 6;   % gives sampling rate of simulation in GHz
 
 %
 
@@ -181,8 +185,8 @@ for k = 1:Norient
 
                 % sf = detected_signal.sf;        % time-domain signal
 
-                output.detected_signal = detected_signal.sf;
-                output.options = options;
+                % output.detected_signal = detected_signal.sf;
+                % output.options = options;
                 
                 % Save traces to disk
                 save(output_path, "-struct", 'output', '-v7.3');
@@ -247,166 +251,22 @@ if save_all_data
     save('Data/MQ_signal_time_evolution_on_resonance.mat', 'trace', 'time_ds')
 end
 
-%%
-det_op = 1;
-
-% Extract matrix for chosen detector: -> [Nt x Nfields]
-signal_matrix = squeeze(signals{1}(det_op,:,:));   % Nt × Nfields
-[Nt, Ntrace] = size(signal_matrix);
-
-% time axis (ns)
-time = (0:Nt-1) * experiment.dt;
-
-
-% initial trace (field index) — make sure this is in 1..Ntrace
-initial_trace = min(158, Ntrace);
-
-% Create UI figure and axes
-fig = uifigure('Name', 'Time-Domain Spectrum Pz', 'NumberTitle', 'off');
-ax = uiaxes(fig, 'Position', [70 100 700 350]);
-ax.XLabel.String = 'Time / ns';
-ax.YLabel.String = 'Polarization';
-grid(ax, 'on');
-
-% Initial plot
-trace_line = plot(ax, time, real(signal_matrix(:, initial_trace)), 'LineWidth', 1.2);
-title(ax, sprintf('Trace %d', initial_trace));
-
-% Label showing current index
-idxLabel = uilabel(fig, 'Text', sprintf('Index: %d', initial_trace), ...
-    'Position', [20 60 70 22]);
-
-% Slider: use Ntrace for Limits
-slider = uislider(fig, ...
-    'Position', [120 70 580 3], ...
-    'Limits', [1 Ntrace], ...
-    'Value', initial_trace, ...
-    'MajorTicks', round(linspace(1, Ntrace, min(Ntrace, 6))), ...
-    'ValueChangedFcn', @(s,e) update_trace_callback(round(s.Value), ax, trace_line, signal_matrix, time, idxLabel) ...
-    );
-
-% --- Callback function (works in Live Editor) ---
-function update_trace_callback(idx, ax, trace_line, signal_matrix, time, idxLabel)
-    % idx is already integer
-    if idx < 1 || idx > size(signal_matrix,2)
-        return
-    end
-    trace_line.YData = real(signal_matrix(:, idx));
-    trace_line.XData = time;
-    title(ax, sprintf('Trace %d', idx));
-    idxLabel.Text = sprintf('Index: %d', idx);
-    drawnow limitrate
-end
-
-
-%% 
-E_matrix = cell2mat(eigenvalues);
-
-% reshape to 3-D: (4 eigenvals) × (Nfields) × (Norient)
-E_matrix_3D = reshape(E_matrix, size(eigenvalues{1},1), Nfields, Norient);
-
-k = 1;
-figure(10); clf; hold on
-plot(magnetic_fields, real(squeeze(E_matrix_3D(:,:,k))').', 'LineWidth', 1.2)  % -> Nfields x 4
-xlabel('Magnetic field B_0 / T')
-ylabel('Energy (GHz)')
-title(sprintf('Eigenvalues vs B (orientation %d)', k))
-
-k = 1;
-figure(10); clf; hold on
-plot(magnetic_fields, real(squeeze(E_matrix_3D(:,:,k))').', 'LineWidth', 0.8)
-xlabel('Magnetic field B_0 / T')
-ylabel('Energy (GHz)')
-
-k = 1;
-upper_diff = real(E_matrix_3D(4,:,k) - E_matrix_3D(3,:,k));   % 1 × Nfields
-lower_diff = real(E_matrix_3D(2,:,k) - E_matrix_3D(1,:,k));   % 1 × Nfields
-
-figure(11); clf; hold on
-plot(magnetic_fields, upper_diff, magnetic_fields, lower_diff)
-xlabel('Magnetic field B_0 / T')
-ylabel('Energy Difference / GHz')
-legend('Top two levels', 'Bottom two levels')
-
-mask = magnetic_fields > 0.1;
-
-masked_magnetic_fields = magnetic_fields(mask);
-masked_upper_diff = upper_diff(mask);
-
-[min_value, min_index] = min(masked_upper_diff);
-level_crossing = masked_magnetic_fields(min_index);
-disp(level_crossing)
-
-%% get the traces in spectral domain (only works if save_all_data = true)
-
-if save_all_data
-    tdy = zeros(length(allsignals{1}.signals.t{end}),Nfields);
-    tdx = allsignals{1}.signals.t{1};
-    
-    for ii=1:Nfields
-    %     tdy(:,ii) = real(signalc{ii}(1,:));
-    %     tdy(:,ii) = allsignal{ii}.signals.dc{end}(3,:);
-        % Ix
-    %     tdy(:,ii) = allsignal{ii}.signals.sf{end}(4,:);
-    %     tdy(:,ii) = tdy(:,ii) - mean(tdy(:,ii));
-        
-        % Iz
-        tdy(:,ii) = allsignals{1,ii}.signals.sf{1}(1,:);
-    
-    
-        % Ix
-        tdy(:,ii) = allsignals{1,ii}.signals.sf{1}(2,:);
-        
-        
-    end
-    
-    
-    % get spectra
-    [fdy, fdx] = getmultspec(tdy,tdx,2,1);
-    
-    fdx = fdx;
-    p_idx = fdx < 100 & fdx > -100;
-    p_idx = 1:length(fdx);
-    
-    i2Dcut_nox(fdx(p_idx),magnetic_fields,abs(fdy(p_idx,:)),23);
-    %xlim(0,100);
-    title('Hand Hamiltonian')
-    
-    figure(200);
-    clf();
-    contour(fdx(p_idx),magnetic_fields,abs(fdy(p_idx,:))',22)
-    % ylim([1370, 1430])
-    % xlim([-80, 80])
-    xlabel('f [GHz]')
-end
 %% Plot MQ Spectra for different thetas
 det_op = 1;
-peak_positions = [];
-
-% Create figure
-fig = figure('NumberTitle','off','Name','ALC Spectra'); 
-hold on
-for ii = 1:Norient
-    [~, min_index] = min(spectra(ii, det_op, :));
-    peak_positions(ii) = magnetic_fields(min_index);
-    plot(magnetic_fields, squeeze(spectra(ii, det_op, :)))
-end
-peak_positions = [rad2deg(thetas(:)), peak_positions(:)];
-peak_positions([1, length(thetas)], :) = [];
-hold off
-xlabel('B / T')
-ylabel('P_z')
-% xlim([1.8675, 1.9325])
-
-% save('Data/num_ALC_simulation_limit_A187.mat', 'magnetic_fields', "spectra")
 
 legendStrings = arrayfun(@(x) sprintf('\\theta = %.1f°', x), rad2deg(thetas), 'UniformOutput', false);
-legend(legendStrings, 'Location', 'right')
+
+fig = figure('NumberTitle','off','Name','MQ different theta Spectra'); 
+hold on
+h = gobjects(Norient,1);
+for ii = 1:Norient
+    h(ii) = plot(magnetic_fields, squeeze(spectra(ii, det_op, :)));
+end
+legend(h, legendStrings)
+hold off
+
+xlabel('B / T')
+ylabel('P_z')
 
 % Use print with -painters (vector graphics) and -dpdf
 % exportgraphics(fig, 'C:\Users\walk_d\GitHub\MQ_muSR\Figures\ALC_simulations\Sim_different_theta.pdf', 'ContentType','vector','BackgroundColor','none')
-
-% fig = figure('NumberTitle','off','Name','Peak Positions vs theta');
-% hold on;
-% plot(peak_positions(:, 1), peak_positions(:, 2))
-% hold off;
