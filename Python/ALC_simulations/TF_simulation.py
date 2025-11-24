@@ -29,9 +29,9 @@ desc = 'TF NMR simulation for S=1/2, I=1/2 system with isotropic hyperfine coupl
 gen_all_signals = False
 
 # Magnetic field range (in Tesla)
-# magnetic_fields = np.linspace(0.1, 0, 400)
+magnetic_fields = np.linspace(0.1, 0, 400)
 # magnetic_fields = [0, 0.01, 5]
-magnetic_fields = [10]
+# magnetic_fields = [10]
 
 # Zeeman (gamma / GHz/T)
 ge = -28.02495
@@ -41,22 +41,22 @@ gmu = 0.1355
 # A_iso = 0.5148
 A_iso = 0
 # D_parallel = 0.002
-D_parallel = 0.03
+D_parallel = 1
 D_perp = -D_parallel/2
 
 # Rotation angles (in degrees)
-theta_grid_start = 0
-theta_grid_end = 90
-n_thetas = 10000
-
-cos_thetas = np.linspace(np.cos(np.radians(theta_grid_start)), np.cos(np.radians(theta_grid_end)), n_thetas, dtype=np.float64)
-thetas = np.arccos(cos_thetas)
-thetas_deg = np.degrees(thetas)
+# theta_grid_start = 0
+# theta_grid_end = 90
+# n_thetas = 10000
+#
+# cos_thetas = np.linspace(np.cos(np.radians(theta_grid_start)), np.cos(np.radians(theta_grid_end)), n_thetas, dtype=np.float64)
+# thetas = np.arccos(cos_thetas)
+# thetas_deg = np.degrees(thetas)
 
 # thetas_deg = np.linspace(54.7, 90, 1600, dtype=np.float64)
-# # thetas_deg = [0, 30, 45, 90]
-# # thetas_deg = [54.5, 90]
-# thetas = np.radians(thetas_deg)
+# thetas_deg = [0, 30, 45, 90]
+thetas_deg = [0]
+thetas = np.radians(thetas_deg)
 
 # Define the spin operators for S=1/2 and I=1/2
 S = 0.5
@@ -89,7 +89,7 @@ for theta in thetas:
     T_rot = R @ T_principal @ R.T
     T_labs.append(T_rot)
 
-# #%% Simulation
+#%% Simulation
 # Settings
 O = Ix  # observable
 O_string = 'Ix'
@@ -206,7 +206,7 @@ if filename:
 else:
     print("No filename provided. Results not saved to file.")
 
-# #%% Plotting single spectra
+#%% Plotting single spectra
 # B = magnetic_fields[0]  # Tesla
 # B = 0
 # theta = np.degrees(thetas[0])  # degrees
@@ -223,9 +223,7 @@ else:
 # fig.show()
 # fig.write_html(f'Figures/TF_simulations/TF_ZF_O{O_string}_A{A_iso}_T{D_parallel}.html')
 
-# #%% Calculate and plot powder signals
-
-
+#%% Calculate and plot powder signals
 def generate_powder_signals(results, time, magnetic_field, transition_filter=None, make_plot=False):
     """
     Generate time-domain signals from xarray results and return as a pandas DataFrame.
@@ -514,7 +512,7 @@ energy_df = pd.DataFrame(
     index=sel['B'].values,
 )
 
-# energy_df.to_csv('Python/ALC_simulations/Data/energy_levels_A_iso_1GHzdwdd.csv')
+energy_df.to_csv(f'Python/ALC_simulations/Data/energy_levels_A_iso_{A_iso}GHz_D_{D_parallel}GHz_theta{theta}.csv')
 
 # A_iso and D_parallel are in GHz
 fig = px.line(energy_df, x=energy_df.index, y=energy_df.columns, title=f'A={A_iso}, D={D_parallel}, O:{O_string}, θ={theta}°')
