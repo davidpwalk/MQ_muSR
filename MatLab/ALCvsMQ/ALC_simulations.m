@@ -10,8 +10,8 @@ ge = -28.02495;
 gmu = 0.1355;
 
 % Coupling constants (in GHz) and rotation angles (in degree)
-A_iso = 0.003;
-D_parallel = 0.0155;
+A_iso = 0.5148;
+D_parallel = 0.002;
 D_perpen = -D_parallel/2;
 
 % thetas = deg2rad(linspace(0, 90, 200));
@@ -20,7 +20,7 @@ thetas = deg2rad([45]);
 phis = deg2rad([0]); % Phi has no impact on the spectra
 
 % Range of B0
-magnetic_fields = linspace(0, 0.4, 1000);
+magnetic_fields = linspace(0, 2.5, 1000);
 % magnetic_fields = [1.82, 1.8922];
 
 % the system
@@ -219,6 +219,8 @@ plot(magnetic_fields, upper_diff, magnetic_fields, lower_diff)
 xlabel('Magnetic field B_0 / T')
 ylabel('Energy Difference / GHz')
 legend('Top two levels', 'Bottom two levels')
+
+save('Data/ALC_breit_rabi_diagram.mat', 'magnetic_fields', 'E_matrix_3D')
 
 mask = magnetic_fields > 0.1;
 
