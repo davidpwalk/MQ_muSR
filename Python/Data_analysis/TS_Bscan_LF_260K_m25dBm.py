@@ -256,4 +256,4 @@ plt.ylabel('$A$')
 # plt.rcParams["font.family"] = "sans-serif"
 
 
-np.savez('TS_260K_spectrum', B_vec=B_vec[sort_ids], amps = amps[sort_ids,:], stds = stds[sort_ids,:])
+np.savez('../../Data/TS_260K_spectrum', B_vec=B_vec[sort_ids], amps = amps[sort_ids,:], stds = stds[sort_ids,:])

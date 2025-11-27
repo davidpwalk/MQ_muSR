@@ -20,14 +20,14 @@ from iminuit import cost
 
 exp_c = []
 
-# exp_c.append(np.arange(3867,3869)) # alpha runs
+# exp_c.append(np.arange(3756)) # alpha run
 
-exp_c.append(np.arange(3748,3754))
+exp_c.append(np.arange(3757, 3764))
 
 
 run_year = 2025
 # alpha taken from run 3746
-run_alpha = [1.4 , 1.10 , 1.10]
+run_alpha = [1.05, 1.10, 1.10]
 
 
 for ii_exp, runs in enumerate(exp_c):
