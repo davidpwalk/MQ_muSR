@@ -9,7 +9,7 @@ Created on Mon Nov  2 16:29:27 2020
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy
-import mufuns
+import Python.mufuns as mufuns
 from scipy import interpolate
 
 from scipy import signal
@@ -227,33 +227,33 @@ plt.ylabel('$A$')
 
 
 
-lt = np.load('TS_15K_spectrum.npz')
-
-
-plt.figure(7)
-plt.clf()
-plt.errorbar(B_vec[sort_ids], amps[sort_ids,1], yerr = stds[sort_ids,1], marker='o', linestyle='', color='C2' )
-plt.errorbar(lt['B_vec'], lt['amps'][:,1], yerr = lt['stds'][:,1], marker='o', linestyle='', color='C1' )
-
-y_pos = 0.22
-perc = 2
-
-diff = y_pos/100*perc
-
-y_bar = np.array([y_pos, y_pos-diff])
-x_pos = np.array([1.0,1.0])*1280.0
-
-plt.plot(x_pos, y_bar)
-
-plt.legend(loc=0)
-plt.xlabel('Magnetic Field [G]')
-plt.ylabel('LF asymmetry')
-
-# gsi = plt.gcf().get_size_inches()
-# plt.gcf().set_size_inches(gsi[0]*0.75, gsi[1])
-
-plt.gcf().set_size_inches(4.8, 3.2)
-plt.rcParams["font.family"] = "sans-serif"
+# lt = np.load('TS_15K_spectrum.npz')
+#
+#
+# plt.figure(7)
+# plt.clf()
+# plt.errorbar(B_vec[sort_ids], amps[sort_ids,1], yerr = stds[sort_ids,1], marker='o', linestyle='', color='C2' )
+# plt.errorbar(lt['B_vec'], lt['amps'][:,1], yerr = lt['stds'][:,1], marker='o', linestyle='', color='C1' )
+#
+# y_pos = 0.22
+# perc = 2
+#
+# diff = y_pos/100*perc
+#
+# y_bar = np.array([y_pos, y_pos-diff])
+# x_pos = np.array([1.0,1.0])*1280.0
+#
+# plt.plot(x_pos, y_bar)
+#
+# plt.legend(loc=0)
+# plt.xlabel('Magnetic Field [G]')
+# plt.ylabel('LF asymmetry')
+#
+# # gsi = plt.gcf().get_size_inches()
+# # plt.gcf().set_size_inches(gsi[0]*0.75, gsi[1])
+#
+# plt.gcf().set_size_inches(4.8, 3.2)
+# plt.rcParams["font.family"] = "sans-serif"
 
 
 np.savez('TS_260K_spectrum', B_vec=B_vec[sort_ids], amps = amps[sort_ids,:], stds = stds[sort_ids,:])

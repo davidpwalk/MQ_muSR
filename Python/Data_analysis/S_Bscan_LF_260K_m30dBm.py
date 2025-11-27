@@ -18,7 +18,6 @@ from scipy import optimize
 import iminuit
 from iminuit import cost
 
-
 exp_c = []
 
 # exp_c.append(np.arange(3867,3869)) # alpha runs
@@ -228,7 +227,7 @@ plt.show()
 
 
 # lt = np.load('TS_15K_spectrum.npz')
-lt = np.load('TS_260K_spectrum.npz')
+lt = np.load('../../Data/TS_260K_spectrum.npz')
 
 
 plt.figure(7)
