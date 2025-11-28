@@ -22,12 +22,13 @@ exp_c = []
 
 # exp_c.append(np.arange(3756)) # alpha run
 
-exp_c.append(np.arange(3757, 3764))
+exp_c.append(np.arange(3757, 3782))
 
 
 run_year = 2025
 # alpha taken from run 3746
-run_alpha = [1.05, 1.10, 1.10]
+# alpha 1 retrieved via muSRfit: 1.0428(11)
+run_alpha = [1.0428, 1.10, 1.10]
 
 
 for ii_exp, runs in enumerate(exp_c):
@@ -73,7 +74,7 @@ for ii_exp, runs in enumerate(exp_c):
         
         # get the integral of the entire curve
         # integration window
-        strttime = 1300
+        strttime = 1000
         intglen = 1000
         seq_offs = 50
         

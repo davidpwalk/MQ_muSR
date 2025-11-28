@@ -23,12 +23,12 @@ exp_c = []
 
 # exp_c.append(np.arange(3867,3869)) # alpha runs
 
-exp_c.append(np.arange(3955,3979))
+exp_c.append(np.arange(3955, 3979))
 
 
 run_year = 2024
 # alpha taken from run 2432
-run_alpha = [1.175 , 1.10 , 1.10]
+run_alpha = [1.175, 1.10, 1.10]
 
 
 for ii_exp, runs in enumerate(exp_c):

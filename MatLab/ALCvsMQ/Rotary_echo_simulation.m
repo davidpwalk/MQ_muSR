@@ -21,16 +21,18 @@ phis = deg2rad([0]); % Phi has no impact on the spectra
 
 magnetic_fields = [0.0957];
 
+B0 = 0.0957;
+
 % B1 inhomogenity
-B1_center = 0;
+B1_center = 0.0822;
 B1_sigma = 0;
 B1_start = B1_center - 3*B1_sigma;
 B1_end = B1_center + 3*B1_sigma;
 
 
 % nu1 inhomogenity
-nu1_center = 1;
-nu1_sigma = 0.1;
+nu1_center = 10;
+nu1_sigma = 0.5;
 nu1_start = nu1_center - 3*nu1_sigma;
 nu1_end = nu1_center + 3*nu1_sigma;
 nu1_step_size = 0.3;
@@ -72,7 +74,7 @@ nu_uw = abs(nu_electron);
 % nu_uw = 3000
 
 % Set sequence
-tau = 8;  % ns, length of each pulse block
+tau = 8000;  % ns, length of each pulse block
 
 sequence.tp   = [tau, tau];             % two equal pulse blocks
 sequence.nu1  = [1.0, 1.0];
@@ -130,7 +132,7 @@ end
 Nfields = numel(magnetic_fields);
 Nt = sum(experiment.tp)/sum(experiment.dt) + 1;
 
-% Array for different nu1
+% Array for different nu2
 inhom_array = cell(1, length(nu1_vec));
 
 signals = cell(Nfields, Norient);
@@ -214,6 +216,8 @@ ylabel('P_z')
 det_op = 1;
 orientation = 1;
 magnetic_field = 1;
+
+time = (0:Nt-1) * experiment.dt;
 
 stride = 1;   % downsample
 t_idx = 1:stride:length(time);
