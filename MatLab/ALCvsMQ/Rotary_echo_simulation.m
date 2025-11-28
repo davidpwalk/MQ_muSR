@@ -150,8 +150,6 @@ for k = 1:Nfields
             2,0,'z','e', nu_muon; ...
         };
 
-    T_lab = T_labs{k};
-
     temp_signal = zeros(length(options.det_op), Nt, Nfields);
     temp_allsignals = cell(1, Nfields);
 
