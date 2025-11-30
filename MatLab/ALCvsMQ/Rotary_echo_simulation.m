@@ -30,7 +30,7 @@ B1_start = B1_center - 3*B1_sigma;
 B1_end = B1_center + 3*B1_sigma;
 
 
-% nu1 inhomogenity
+% nu1 inhomogenity (nu1 is electron resonance freq)
 nu1_center = 10;
 nu1_sigma = 0.5;
 nu1_start = nu1_center - 3*nu1_sigma;
@@ -132,7 +132,7 @@ end
 Nfields = numel(magnetic_fields);
 Nt = sum(experiment.tp)/sum(experiment.dt) + 1;
 
-% Array for different nu2
+% Array for different nu1
 inhom_array = cell(1, length(nu1_vec));
 
 signals = cell(Nfields, Norient);
