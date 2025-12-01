@@ -89,18 +89,11 @@ gmu = 0.1355;
 
 magnetic_field = 0.0957;
 
-% Introduce Anisotropy on electron res freq
-nu_electron_center = magnetic_field * ge;
-nu_electron_sigma = 0.001; % in GHz
-nu_electron_start = nu_electron_center - 3*nu_electron_sigma;
-nu_electron_end = nu_electron_center + 3*nu_electron_sigma;
-nu_electron_length = 100;
-nu_electron_vec = linspace(nu_electron_start, nu_electron_end, nu_electron_length);
-nu_electron_probs = exp(-((nu_electron_center-nu_electron_vec)/nu_electron_sigma).^2);
-nu_electron_probs = nu_electron_probs/trapz(nu_electron_probs);
-
 nu_muon = gmu*magnetic_field;
-nu_electron = nu_electron_center; % should be irrelevant what this is
+nu_electron = gme*magnetic_field;
+
+% Introduce anisotropy in B1 (change sequence.nu1 in loop)
+
 
 nu_uw = abs(nu_electron);
 
@@ -125,10 +118,11 @@ system.sqn=[0.5 0.5];       % spin quantum numbers
 system.interactions = {};
                      
 system.init_state='ez'; % LF mode (muon in the Iz eigenstate)
+% Rotary only really work in x and y, but one stops the decay of the signal
 system.eq = 'init';  % equilibrium state is the same as initial state
 
 % Set options
-options.relaxation=0;       % tells SPIDYAN whether to include relaxation (1) or not (0)
+options.relaxation=0;       % should be off here because decay of signal should be due to inhomogenties
 options.down_conversion=0;  % downconversion of signal (1) or not (0)
 options.det_op={'ez'};
 options.labframe = 1;       % lab frame simulation is on
@@ -137,12 +131,16 @@ options.awg.s_rate = 6;   % gives sampling rate of simulation in GHz
 % Set sequence
 tau = 8000;  % ns, length of each pulse block
 
+nu_uw = 0.0002;
+
 sequence.tp   = [tau, tau];             % two equal pulse blocks
 sequence.nu1  = [1.0, 1.0];             % same amplitudes
 sequence.phase = [0, pi];               % phase shift for second part of pulse
 sequence.frq  = [nu_uw, nu_uw];         % same frequencies
 sequence.t_rise = [0, 0];               % no chirp
 sequence.detection = ones(1,length(sequence.tp));
+
+plot_pulses(triple(sequence, options), options)
 
 %-- Generation of relevant matrices --%
 Sx = sop([1/2 1/2],'xe');

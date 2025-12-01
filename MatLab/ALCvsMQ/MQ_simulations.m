@@ -32,7 +32,7 @@ B0 = 0.0822;
 % dB = 0.000005;
 B_start = 0.08;
 B_end = 0.098;
-dB = 0.000025;
+dB = 0.00005;
 magnetic_fields = B_start : dB : B_end;
 % magnetic_fields = linspace(0, 0.16, 200);
 
@@ -41,8 +41,8 @@ system.sqn=[0.5 0.5];       % spin quantum numbers
 
 system.interactions = {};
                      
-% system.init_state='ez'; % LF mode (muon in the Iz eigenstate)
-system.init_state='zz'; % both e- and muon in Jz eigenstate (only SzIz occupied)
+system.init_state='ez'; % LF mode (muon spin polarized)
+% system.init_state='zz'; % both e- and muon in Jz eigenstate (only SzIz occupied)
 system.eq = 'init';  % equilibrium state is the same as initial state
 
 % Relaxtion matrix (e- transitions 2 us, rest 1 s)
@@ -51,8 +51,8 @@ system.T1 = [0, 1e9,  1e9,  1e9;
              0,   0,    0,  1e9;
              0,   0,    0,    0];
 
-system.T2 = [0, 1e9, 2000,  1e9;
-             0,   0,  1e9, 2000;            
+system.T2 = [0, 1e9, 2000, 2000;
+             0,   0, 2000, 2000;            
              0,   0,    0,  1e9;
              0,   0,    0,    0];
 
