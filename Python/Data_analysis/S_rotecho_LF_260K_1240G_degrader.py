@@ -9,7 +9,7 @@ Created on Mon Nov  2 16:29:27 2020
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy
-import mufuns
+import Python.mufuns as mufuns
 from scipy import interpolate
 
 from scipy import signal
@@ -149,7 +149,7 @@ plt.errorbar(x_axis, amps[:,2], yerr = stds[:,2], label = 'post longer')
 plt.legend(loc=0)
 plt.xlabel('$t$ [ns]')
 plt.ylabel('$A$')
-
+plt.show()
 
 
 
@@ -165,6 +165,7 @@ plt.ylabel('LF asymmetry')
 
 plt.gcf().set_size_inches(4.8, 3.2)
 plt.rcParams["font.family"] = "sans-serif"
+plt.show()
 
 
-np.savez('S_260K_rotecho_1240G_toggle', pulspars=pulspars, amps = amps, stds = stds)
+# np.savez('S_260K_rotecho_1240G_toggle', pulspars=pulspars, amps = amps, stds = stds)

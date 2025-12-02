@@ -8,6 +8,7 @@ Created on Mon Nov  2 16:29:27 2020
 
 import numpy as np
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 import scipy
 import Python.mufuns as mufuns
 from scipy import interpolate
@@ -18,6 +19,7 @@ from scipy import optimize
 import iminuit
 from iminuit import cost
 
+#%%
 exp_c = []
 
 # exp_c.append(np.arange(3756)) # alpha run
@@ -236,13 +238,23 @@ plt.clf()
 plt.errorbar(B_vec[sort_ids], amps[sort_ids,1], yerr = stds[sort_ids,1], marker='o', linestyle='', color='C2' )
 plt.errorbar(lt['B_vec'], lt['amps'][:,1], yerr = lt['stds'][:,1], marker='o', linestyle='', color='C1' )
 
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=B_vec[sort_ids], y=amps[sort_ids, 1],
+                         error_y=dict(
+                             array=lt['stds'][:,1],
+                             type='data',
+                                visible=True),
+                         mode='markers',
+                         ))
+fig.show()
+
 y_pos = 0.22
 perc = 2
 
 diff = y_pos/100*perc
 
 y_bar = np.array([y_pos, y_pos-diff])
-x_pos = np.array([1.0,1.0])*1280.0
+x_pos = np.array([1.0, 1.0])*1280.0
 plt.show()
 
 plt.plot(x_pos, y_bar)
