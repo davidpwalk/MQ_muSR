@@ -16,7 +16,8 @@ ge = -28.02495;
 gmu = 0.1355;
 
 % Coupling constants (in GHz) and rotation angles (in degree)
-A_iso = 0.05;
+% A_iso = 0.05;
+A_isos = [0, 0.005, 0.01, 0.05, 0.1, 1, 2, 5];
 D_parallel = 0.0155;
 D_perpen = -D_parallel/2;
 
@@ -32,7 +33,7 @@ B0 = 0.0822;
 % dB = 0.000005;
 B_start = 0.08;
 B_end = 0.084;
-dB = 0.000005;
+dB = 0.00002;
 magnetic_fields = B_start : dB : B_end;
 % magnetic_fields = linspace(0, 0.16, 200);
 
@@ -140,6 +141,10 @@ end
 
 tic;
 
+spectra_A_isos = zeros(Nfields, length(A_isos));
+
+for a = 1:length(A_isos)
+A_iso = A_isos(a);
 % parpool('Threads');  % Start ThreadPool, threads share memory
 for k = 1:Norient
     T_lab = T_labs{k};
@@ -212,7 +217,24 @@ for k = 1:Norient
     end
 end
 
+det_op = 1;
+spectra_A_isos(:, a) = squeeze(spectra(:, det_op, :));
+
+end
+
 toc;
+
+%%
+fig = figure('NumberTitle','off','Name','MQ spectra different A_iso');
+hold on
+for ii = 1:length(A_isos)
+    plot(magnetic_fields, spectra_A_isos(:, ii))
+end
+legend_strings = arrayfun(@(x) sprintf('A_{iso} = %.3f°', x), A_isos, 'UniformOutput', false);
+legend(legend_strings)
+hold off
+
+% save("MQ_simulations_A_iso_progression.mat", "magnetic_fields", "sepctra_A_isos")
 
 %% Integrate over thetas
 weights = sin(thetas);
@@ -270,7 +292,3 @@ hold off
 xlabel('B / T')
 ylabel('P_z')
 
-% Use print with -painters (vector graphics) and -dpdf
-% exportgraphics(fig, 'C:\Users\walk_d\GitHub\MQ_muSR\Figures\ALC_simulations\Sim_different_theta.pdf', 'ContentType','vector','BackgroundColor','none')
-
-save('Data/MQ_pcolor_data.mat', 'magnetic_fields', 'thetas', 'spectra')
