@@ -20,7 +20,7 @@ A_iso = 0.0;
 D_parallel = 0.0155;
 D_perpen = -D_parallel/2;
 
-thetas = deg2rad(linspace(0, 90, 100));
+thetas = deg2rad(linspace(0, 90, 10));
 % thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
 % thetas = deg2rad([45]);
 phis = deg2rad([0]); % Phi has no impact on the spectra
@@ -30,9 +30,12 @@ B0 = 0.0822;
 % B_start = 0.09525;
 % B_end = 0.09725;
 % dB = 0.000005;
-B_start = 0.08;
-B_end = 0.084;
-dB = 0.000001;
+% B_start = 0.075;
+% B_end = 0.09;
+% dB = 0.0002;
+B_start = 2.21;
+B_end = 2.28;
+dB = 0.0005;
 magnetic_fields = B_start : dB : B_end;
 % magnetic_fields = linspace(0, 0.16, 200);
 
@@ -43,7 +46,7 @@ system.sqn=[0.5 0.5];       % spin quantum numbers
 
 system.interactions = {};
                      
-system.init_state='ez'; % LF mode (muon spin polarized)
+system.init_state='ze'; % LF mode (muon spin polarized)
 % system.init_state='zz'; % both e- and muon in Jz eigenstate (only SzIz occupied)
 system.eq = 'init';  % equilibrium state is the same as initial state
 
@@ -232,9 +235,10 @@ ylabel('P_z')
 
 %% Plot time evolution of signal
 % [experiment, options] = triple(sequence, options);  % build experiment to get experiment.tp
+det_op = 1;
 
-signal = zeros(size(signals{1}));
-Nt = size(signals{1}, 2);
+signal = zeros(size(signals{det_op}));
+Nt = size(signals{det_op}, 2);
 time = (0:Nt-1) * experiment.dt;
 trace_idx = 158;
 
@@ -254,7 +258,7 @@ if save_all_data
 end
 
 %% Plot MQ Spectra for different thetas
-det_op = 1;
+det_op = 3;
 
 legendStrings = arrayfun(@(x) sprintf('\\theta = %.1f°', x), rad2deg(thetas), 'UniformOutput', false);
 
@@ -273,4 +277,4 @@ ylabel('P_z')
 % Use print with -painters (vector graphics) and -dpdf
 % exportgraphics(fig, 'C:\Users\walk_d\GitHub\MQ_muSR\Figures\ALC_simulations\Sim_different_theta.pdf', 'ContentType','vector','BackgroundColor','none')
 
-% save('Data/MQ_pcolor_data.mat', 'magnetic_fields', 'thetas', 'spectra')
+% save('Data/MQ_pcolor_datadwdwd.mat', 'magnetic_fields', 'thetas', 'spectra')
