@@ -17,23 +17,22 @@ gmu = 0.1355;
 
 % Coupling constants (in GHz) and rotation angles (in degree)
 % A_iso = 0.05;
-A_isos = [0, 0.005, 0.01, 0.05, 0.1, 1, 2, 5];
+% A_isos = [0, 0.005, 0.01, 0.05, 0.1, 0.2, 0.5, 1];
+A_isos = [0, 0.01, 0.05, 0.1, 0.2, 1];
+% A_isos = [0, 0.05, 0.1, 5];
 D_parallel = 0.0155;
 D_perpen = -D_parallel/2;
 
-% thetas = deg2rad(linspace(0, 90, 50));
+thetas = deg2rad(linspace(0, 90, 50));
 % thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
-thetas = deg2rad([45]);
+% thetas = deg2rad([45]);
 phis = deg2rad([0]); % Phi has no impact on the spectra
 
 % Range of B0
 B0 = 0.0822;
-% B_start = 0.09525;
-% B_end = 0.09725;
-% dB = 0.000005;
 B_start = 0.08;
 B_end = 0.084;
-dB = 0.00002;
+dB = 0.000005;
 magnetic_fields = B_start : dB : B_end;
 % magnetic_fields = linspace(0, 0.16, 200);
 
@@ -141,7 +140,7 @@ end
 
 tic;
 
-spectra_A_isos = zeros(Nfields, length(A_isos));
+spectra_A_isos = zeros(Norient, Nfields, length(A_isos));
 
 for a = 1:length(A_isos)
 A_iso = A_isos(a);
@@ -218,7 +217,7 @@ for k = 1:Norient
 end
 
 det_op = 1;
-spectra_A_isos(:, a) = squeeze(spectra(:, det_op, :));
+spectra_A_isos(:, :, a) = squeeze(spectra(:, det_op, :));
 
 end
 
@@ -230,7 +229,7 @@ hold on
 for ii = 1:length(A_isos)
     plot(magnetic_fields, spectra_A_isos(:, ii))
 end
-legend_strings = arrayfun(@(x) sprintf('A_{iso} = %.3f°', x), A_isos, 'UniformOutput', false);
+legend_strings = arrayfun(@(x) sprintf('A_{iso} = %.3f GHz', x), A_isos, 'UniformOutput', false);
 legend(legend_strings)
 hold off
 
@@ -239,18 +238,23 @@ hold off
 %% Integrate over thetas
 weights = sin(thetas);
 det_op = 1;
-powder_spectrum = zeros(Nfields, 1);
-for ii = 1:Nfields
-    powder_spectrum(ii) = sum(weights * spectra(:, det_op, ii))/sum(weights);
+powder_spectra = cell(1, length(A_isos));
+norm_weights = weights(:) / sum(weights);
+
+for a = 1:length(A_isos)
+    powder_spectra{a} = (norm_weights.' * spectra_A_isos(:, :, a)).';   % (Nfields x 1)
 end
 
 fig = figure('NumberTitle','off','Name','MQ Powder Spectrum');
 hold on
-plot(magnetic_fields, powder_spectrum)
+for a = 1:length(A_isos)
+    plot(magnetic_fields, powder_spectra{a}, 'DisplayName', sprintf('A_{iso} = %.3f', A_isos(a)))
+end
+legend show
 xlabel('B / T')
 ylabel('P_z')
 
-% save('Data/num_ALC_simulation_SrTiO3_powdedwdwdwdr.mat', 'magnetic_fields', "powder_spectrum")
+save('Data/num_MQ_powder_spectra_D15_5MHz.mat', 'magnetic_fields', "powder_spectra")
 
 %% Plot time evolution of signal
 % [experiment, options] = triple(sequence, options);  % build experiment to get experiment.tp
