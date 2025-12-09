@@ -18,7 +18,8 @@ gmu = 0.1355;
 % Coupling constants (in GHz) and rotation angles (in degree)
 % A_iso = 0.05;
 % A_isos = [0, 0.005, 0.01, 0.05, 0.1, 0.2, 0.5, 1];
-A_isos = [0, 0.01, 0.05, 0.1, 0.2, 1];
+% A_isos = [0, 0.01, 0.05, 0.1, 0.2, 1];
+A_isos = [1];
 % A_isos = [0, 0.05, 0.1, 5];
 D_parallel = 0.0155;
 D_perpen = -D_parallel/2;
@@ -63,7 +64,7 @@ options.relaxation=1;       % tells SPIDYAN whether to include relaxation (1) or
 options.down_conversion=0;  % downconversion of signal (1) or not (0)
 options.det_op={'ez', 'ex', 'ze'};
 options.labframe = 1;       % lab frame simulation is on
-options.awg.s_rate = 6;   % gives sampling rate of simulation in GHz
+options.awg.s_rate = 15;   % gives sampling rate of simulation in GHz
 
 %
 
@@ -254,7 +255,7 @@ legend show
 xlabel('B / T')
 ylabel('P_z')
 
-save('Data/num_MQ_powder_spectra_D15_5MHz.mat', 'magnetic_fields', "powder_spectra")
+% save('Data/num_MQ_powder_spectra_D15_5MHzdwdwdwdw.mat', 'magnetic_fields', "powder_spectra", "A_isos")
 
 %% Plot time evolution of signal
 % [experiment, options] = triple(sequence, options);  % build experiment to get experiment.tp

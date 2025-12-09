@@ -227,7 +227,7 @@ plt.ylabel('$A$')
 
 
 
-lt = np.load('STO_17K_spectrum.npz')
+lt = np.load('../../Data/STO_17K_spectrum.npz')
 
 
 plt.figure(7)

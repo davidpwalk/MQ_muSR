@@ -20,7 +20,7 @@ A_iso = 0.0;
 D_parallel = 0.0155;
 D_perpen = -D_parallel/2;
 
-thetas = deg2rad(linspace(0, 90, 10));
+thetas = deg2rad(linspace(0, 90, 100));
 % thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
 % thetas = deg2rad([45]);
 phis = deg2rad([0]); % Phi has no impact on the spectra
@@ -33,9 +33,9 @@ B0 = 0.0822;
 % B_start = 0.075;
 % B_end = 0.09;
 % dB = 0.0002;
-B_start = 2.21;
-B_end = 2.28;
-dB = 0.0005;
+B_start = 0.08;
+B_end = 0.084;
+dB = 0.000001;
 magnetic_fields = B_start : dB : B_end;
 % magnetic_fields = linspace(0, 0.16, 200);
 
@@ -262,7 +262,7 @@ det_op = 3;
 
 legendStrings = arrayfun(@(x) sprintf('\\theta = %.1f°', x), rad2deg(thetas), 'UniformOutput', false);
 
-fig = figure('NumberTitle','off','Name','MQ different theta Spectra A_iso5'); 
+fig = figure('NumberTitle','off','Name','MQ different theta Spectra'); 
 hold on
 h = gobjects(Norient,1);
 for ii = 1:Norient
@@ -277,4 +277,4 @@ ylabel('P_z')
 % Use print with -painters (vector graphics) and -dpdf
 % exportgraphics(fig, 'C:\Users\walk_d\GitHub\MQ_muSR\Figures\ALC_simulations\Sim_different_theta.pdf', 'ContentType','vector','BackgroundColor','none')
 
-% save('Data/MQ_pcolor_datadwdwd.mat', 'magnetic_fields', 'thetas', 'spectra')
+save('Data/SQ_pcolor_electron.mat', 'magnetic_fields', 'thetas', 'spectra')

@@ -9,7 +9,7 @@ Created on Mon Nov  2 16:29:27 2020
 import numpy as np
 import matplotlib.pyplot as plt
 # import scipy
-import mufuns
+import Python.mufuns as mufuns
 # from scipy import interpolate
 
 # from scipy import signal
