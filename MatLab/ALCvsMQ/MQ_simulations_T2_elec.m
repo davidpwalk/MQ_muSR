@@ -22,17 +22,11 @@ D_perpen = -D_parallel/2;
 
 thetas = deg2rad(linspace(0, 90, 50));
 % thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
-% thetas = deg2rad([45]);
+% thetas = deg2rad([45, 60, 80]);
 phis = deg2rad([0]); % Phi has no impact on the spectra
 
 % Range of B0
 B0 = 0.0822;
-% B_start = 0.09525;
-% B_end = 0.09725;
-% dB = 0.000005;
-% B_start = 0.075;
-% B_end = 0.09;
-% dB = 0.0002;
 B_start = 0.078;
 B_end = 0.086;
 dB = 0.00001;
@@ -56,17 +50,9 @@ system.T1 = [0, 1e9,  1e9,  1e9;
              0,   0,    0,  1e9;
              0,   0,    0,    0];
 
-% system.T2 = [0, 1e9, 2000, 2000;
-%              0,   0, 2000, 2000;            
-%              0,   0,    0,  1e9;
-%              0,   0,    0,    0];
-
-T2_elec = 20;
-
-system.T2 = [0, 1e9, T2_elec, T2_elec;
-             0,   0, T2_elec, T2_elec;            
-             0,   0,       0,     1e9;
-             0,   0,       0,       0];
+% T2 of elec transitions
+T2_array = [5, 10, 20, 50, 100, 1000, 2000];
+% T2_array = [5, 50, 2000];
 
 % Set options
 options.relaxation=1;       % tells SPIDYAN whether to include relaxation (1) or not (0)
@@ -150,6 +136,15 @@ end
 
 tic;
 
+spectra_T2s = zeros(Norient, Nfields, length(T2_array));
+
+for T2_idx = 1:length(T2_array)
+T2 = T2_array(T2_idx);
+
+system.T2 = [0, 1e9, T2,  T2;
+             0,   0, T2,  T2;            
+             0,   0,  0, 1e9;
+             0,   0,  0,   0];
 % parpool('Threads');  % Start ThreadPool, threads share memory
 for k = 1:Norient
     T_lab = T_labs{k};
@@ -222,23 +217,43 @@ for k = 1:Norient
     end
 end
 
+det_op = 1;
+spectra_T2s(:, :, T2_idx) = squeeze(spectra(:, det_op, :));
+
+end
+
 toc;
+
+%% Show spectra for different T2
+fig = figure('NumberTitle','off','Name','MQ spectra different T2_{elec}');
+hold on
+for ii = 1:length(T2_array)
+    plot(magnetic_fields, spectra_T2s(:, :, ii))
+end
+legend_strings = arrayfun(@(x) sprintf('T2_{elec} = %.0f ns', x), T2_array, 'UniformOutput', false);
+legend(legend_strings)
+hold off
 
 %% Integrate over thetas
 weights = sin(thetas);
 det_op = 1;
-powder_spectrum = zeros(Nfields, 1);
-for ii = 1:Nfields
-    powder_spectrum(ii) = sum(weights * spectra(:, det_op, ii))/sum(weights);
+powder_spectra = cell(1, length(T2_array));
+norm_weights = weights(:) / sum(weights);
+
+for T2_idx = 1:length(T2_array)
+    powder_spectra{T2_idx} = (norm_weights.' * spectra_T2s(:, :, T2_idx)).';   % (Nfields x 1)
 end
 
 fig = figure('NumberTitle','off','Name','MQ Powder Spectrum');
 hold on
-plot(magnetic_fields, powder_spectrum)
+for T2_idx = 1:length(T2_array)
+    plot(magnetic_fields, powder_spectra{T2_idx}, 'DisplayName', sprintf('T2_{elec} = %.0f ns', T2_array(T2_idx)))
+end
+legend show
 xlabel('B / T')
 ylabel('P_z')
 
-% save('Data/num_ALC_simulation_SrTiO3_powdedwdwdwdr.mat', 'magnetic_fields', "powder_spectrum")
+% save('Data/num_MQ_powder_spectra_D15_5MHz_different_T2dwdadawd.mat', 'magnetic_fields', "powder_spectra", "T2_array")
 
 %% Plot time evolution of signal
 % [experiment, options] = triple(sequence, options);  % build experiment to get experiment.tp
