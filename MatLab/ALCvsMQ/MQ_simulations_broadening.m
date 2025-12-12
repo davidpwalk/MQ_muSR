@@ -11,6 +11,14 @@ if save_traces_to_disk && ~exist("save_trace_dir", 'dir')
     mkdir(save_trace_dir)
 end
 
+% Sweep settings
+nu1_default = 1;  % value used if other param is sweeped
+T2_default = 2000;
+
+sweep_param = 'nu1';
+sweep_values = [5, 10, 20, 50, 100, 1000, 2000];
+sweep_values = [1, 2, 5, 10];
+
 % Zeeman (gamma / GHz/T)
 ge = -28.02495;
 gmu = 0.1355;
@@ -50,10 +58,6 @@ system.T1 = [0, 1e9,  1e9,  1e9;
              0,   0,    0,  1e9;
              0,   0,    0,    0];
 
-% T2 of elec transitions
-T2_array = [5, 10, 20, 50, 100, 1000, 2000];
-T2_array = [5, 50, 2000];
-
 % Set options
 options.relaxation=1;       % tells SPIDYAN whether to include relaxation (1) or not (0)
 options.down_conversion=0;  % downconversion of signal (1) or not (0)
@@ -71,8 +75,6 @@ nu_uw = abs(nu_electron);
 
 % Set sequence
 sequence.tp=16000.0;                             % vector with event lengths in ns
-sequence.nu1=10.0;                                % amplitude, here in MHz, linearly polarized
-% sequence.nu1=0;                                % amplitude
 sequence.frq=nu_uw;                              % frequency of pulse
 sequence.t_rise=0;                               % rise time of chirp pulses
 sequence.detection=ones(1,length(sequence.tp));  % detection always on
@@ -136,15 +138,27 @@ end
 
 tic;
 
-spectra_T2s = zeros(Norient, Nfields, length(T2_array));
+spectra_sweep = zeros(Norient, Nfields, length(sweep_values));
 
-for T2_idx = 1:length(T2_array)
-T2 = T2_array(T2_idx);
+for sweep_idx = 1:length(sweep_values)
 
+if strcmp(sweep_param, 'T2')
+    T2 = sweep_values(sweep_idx);
+    nu1 = nu1_default;
+    unit = 'ns';  % unit displayed in plot legend
+
+elseif strcmp(sweep_param, 'nu1')
+    nu1 = sweep_values(sweep_idx);
+    T2 = T2_default;
+    unit = 'MHz';  % unit displayed in plot legend
+end
+
+sequence.nu1 = nu1;
 system.T2 = [0, 1e9, T2,  T2;
              0,   0, T2,  T2;            
              0,   0,  0, 1e9;
              0,   0,  0,   0];
+
 % parpool('Threads');  % Start ThreadPool, threads share memory
 for k = 1:Norient
     T_lab = T_labs{k};
@@ -218,36 +232,36 @@ for k = 1:Norient
 end
 
 det_op = 1;
-spectra_T2s(:, :, T2_idx) = squeeze(spectra(:, det_op, :));
+spectra_sweep(:, :, sweep_idx) = squeeze(spectra(:, det_op, :));
 
 end
 
 toc;
 
-%% Show spectra for different T2
-fig = figure('NumberTitle','off','Name','MQ spectra different T2_{elec}');
+%% Show spectra for sweep
+fig = figure('NumberTitle','off','Name', join('MQ spectra different ', sweep_param));
 hold on
-for ii = 1:length(T2_array)
-    plot(magnetic_fields, spectra_T2s(:, :, ii))
+for ii = 1:length(sweep_values)
+    plot(magnetic_fields, spectra_sweep(:, :, ii))
 end
-legend_strings = arrayfun(@(x) sprintf('T2_{elec} = %.0f ns', x), T2_array, 'UniformOutput', false);
+legend_strings = arrayfun(@(x) sprintf('%s = %.0f %s', sweep_param, x, unit), sweep_values, 'UniformOutput', false);
 legend(legend_strings)
 hold off
 
 %% Integrate over thetas
 weights = sin(thetas);
 det_op = 1;
-powder_spectra = cell(1, length(T2_array));
+powder_spectra = cell(1, length(sweep_values));
 norm_weights = weights(:) / sum(weights);
 
-for T2_idx = 1:length(T2_array)
-    powder_spectra{T2_idx} = (norm_weights.' * spectra_T2s(:, :, T2_idx)).';   % (Nfields x 1)
+for sweep_idx = 1:length(sweep_values)
+    powder_spectra{sweep_idx} = (norm_weights.' * spectra_sweep(:, :, sweep_idx)).';   % (Nfields x 1)
 end
 
 fig = figure('NumberTitle','off','Name','MQ Powder Spectrum');
 hold on
-for T2_idx = 1:length(T2_array)
-    plot(magnetic_fields, powder_spectra{T2_idx}, 'DisplayName', sprintf('T2_{elec} = %.0f ns', T2_array(T2_idx)))
+for sweep_idx = 1:length(sweep_values)
+    plot(magnetic_fields, powder_spectra{sweep_idx}, 'DisplayName', sprintf('T2_{elec} = %.0f ns', sweep_values(sweep_idx)))
 end
 legend show
 xlabel('B / T')

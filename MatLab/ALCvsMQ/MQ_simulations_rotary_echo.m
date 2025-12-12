@@ -3,7 +3,7 @@ clear options
 clear sequence
 
 %-- Settings --%
-rot_echo = true;
+rot_echo = false;
 
 save_all_data = true;
 save_traces_to_disk = false;  % only applies if save_all_data=true
@@ -23,9 +23,9 @@ D_parallel = 0.0155;
 % D_parallel = 0;
 D_perpen = -D_parallel/2;
 
-thetas = deg2rad(linspace(0, 90, 100));
+% thetas = deg2rad(linspace(0, 90, 100));
 % thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
-% thetas = deg2rad([45, 60]);
+thetas = deg2rad([45]);
 phis = deg2rad([0]); % Phi has no impact on the spectra
 
 magnetic_field = 0.08178;
@@ -64,14 +64,11 @@ options.awg.s_rate = 6;   % gives sampling rate of simulation in GHz
 
 %
 
-nu_muon = gmu*B0;
-nu_electron = ge*B0;
-
 nu_uw = abs(nu_electron);
 % nu_uw = 3000
 
 % Set sequence
-tau_array = [50, 100, 200, 400, 800];  % ns
+tau_array = [50, 100, 200, 400, 800, 1600, 3200];  % ns
 
 sequence.nu1  = [1.0, 1.0];
 % sequence.nu1  = [0, 0];
