@@ -20,16 +20,16 @@ A_iso = 0.0014;
 D_parallel = 0.0155;
 D_perpen = -D_parallel/2;
 
-thetas = deg2rad(linspace(0, 90, 50));
+% thetas = deg2rad(linspace(0, 90, 50));
 % thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
-% thetas = deg2rad([45, 60, 80]);
+thetas = deg2rad([45]);
 phis = deg2rad([0]); % Phi has no impact on the spectra
 
 % Range of B0
 B0 = 0.0822;
 B_start = 0.078;
 B_end = 0.086;
-dB = 0.00001;
+dB = 0.0001;
 magnetic_fields = B_start : dB : B_end;
 % magnetic_fields = linspace(0, 0.16, 200);
 
@@ -52,7 +52,7 @@ system.T1 = [0, 1e9,  1e9,  1e9;
 
 % T2 of elec transitions
 T2_array = [5, 10, 20, 50, 100, 1000, 2000];
-% T2_array = [5, 50, 2000];
+T2_array = [5, 50, 2000];
 
 % Set options
 options.relaxation=1;       % tells SPIDYAN whether to include relaxation (1) or not (0)
@@ -71,7 +71,7 @@ nu_uw = abs(nu_electron);
 
 % Set sequence
 sequence.tp=16000.0;                             % vector with event lengths in ns
-sequence.nu1=1.0;                                % amplitude, here in MHz, linearly polarized
+sequence.nu1=10.0;                                % amplitude, here in MHz, linearly polarized
 % sequence.nu1=0;                                % amplitude
 sequence.frq=nu_uw;                              % frequency of pulse
 sequence.t_rise=0;                               % rise time of chirp pulses
