@@ -3,7 +3,7 @@ clear options
 clear sequence
 
 %-- Settings --%
-rot_echo = false;
+rot_echo = true;
 
 save_all_data = true;
 save_traces_to_disk = false;  % only applies if save_all_data=true
@@ -23,9 +23,9 @@ D_parallel = 0.0155;
 % D_parallel = 0;
 D_perpen = -D_parallel/2;
 
-% thetas = deg2rad(linspace(0, 90, 100));
+thetas = deg2rad(linspace(0, 90, 10));
 % thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
-thetas = deg2rad([45]);
+% thetas = deg2rad([45]);
 phis = deg2rad([0]); % Phi has no impact on the spectra
 
 magnetic_field = 0.08178;
@@ -60,7 +60,7 @@ options.relaxation=1;       % tells SPIDYAN whether to include relaxation (1) or
 options.down_conversion=0;  % downconversion of signal (1) or not (0)
 options.det_op={'ez', 'ex', 'ze'};
 options.labframe = 1;       % lab frame simulation is on
-options.awg.s_rate = 6;   % gives sampling rate of simulation in GHz
+options.awg.s_rate = 10;   % gives sampling rate of simulation in GHz
 
 %
 
@@ -153,8 +153,8 @@ for tau_idx = 1:length(tau_array)
 
     parfor n = 1:Norient
         T_lab = T_labs{n};
-        temp_eigenvalues = zeros(4, Nfields);
-        temp_integrals = zeros(numel(options.det_op), Nfields);
+
+        % temp_integrals = zeros(numel(options.det_op), Nfields);
     
         if save_all_data
             temp_signal = zeros(length(options.det_op), Nt, Norient);
@@ -177,7 +177,6 @@ for tau_idx = 1:length(tau_array)
         
         [temp_state, detected_signal, ~] = homerun(temp_state, temp_system, temp_experiment, temp_options, []);
 
-        temp_eigenvalues(:, n) = eig(temp_system.ham);
         temp_integrals(:, n) = mean(real(detected_signal.sf), 2);
         LF_asymmetries(n, tau_idx) = real(detected_signal.sf(1, end));
 
@@ -203,7 +202,6 @@ for tau_idx = 1:length(tau_array)
             end
         end
         
-        eigenvalues{n} = temp_eigenvalues;
         % spectra(n,:,:) = temp_integrals;
     end
 
@@ -268,30 +266,6 @@ xlabel('B / T')
 ylabel('P_z')
 
 % save('Data/num_ALC_simulation_SrTiO3_powdedwdwdwdr.mat', 'magnetic_fields', "powder_spectrum")
-
-%% Plot time evolution of signal
-% [experiment, options] = triple(sequence, options);  % build experiment to get experiment.tp
-det_op = 1;
-
-signal = zeros(size(signals{det_op}));
-Nt = size(signals{det_op}, 2);
-time = (0:Nt-1) * experiment.dt;
-trace_idx = 1;
-
-if save_all_data
-    stride = 1;   % downsample
-    t_idx = 1:stride:length(time);
-    trace = squeeze(signals{1}(1, t_idx, 1));
-    time_ds = time(t_idx);
-    
-    fig = figure('NumberTitle','off','Name','Time-Domain Spectrum Pz');
-    hold on
-    plot(time_ds, real(trace))
-    xlabel('Time / ns')
-    ylabel('Polarization')
-
-    % save('Data/MQ_signal_time_evolution_on_resonance.mat', 'trace', 'time_ds')
-end
 
 %% Plot MQ Spectra for different thetas
 det_op = 1;
