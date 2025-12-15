@@ -3,7 +3,7 @@ clear options
 clear sequence
 
 %-- Settings --%
-save_all_data = false;
+save_all_data = true;
 save_traces_to_disk = false;  % only applies if save_all_data=true
 save_trace_dir = 'Data/traces/test';
 
@@ -16,8 +16,8 @@ nu1_default = 1;  % value used if other param is sweeped
 T2_default = 2000;
 
 sweep_param = 'nu1';
-sweep_values = [5, 10, 20, 50, 100, 1000, 2000];
-sweep_values = [1, 2, 5, 10];
+% sweep_values = [5, 10, 20, 50, 100, 1000, 2000];
+sweep_values = [1, 2, 10, 50, 100];
 
 % Zeeman (gamma / GHz/T)
 ge = -28.02495;
@@ -40,6 +40,7 @@ B_end = 0.086;
 dB = 0.0001;
 magnetic_fields = B_start : dB : B_end;
 % magnetic_fields = linspace(0, 0.16, 200);
+magnetic_fields = [0.79, 0.08177];
 
 length(magnetic_fields)
 
@@ -225,9 +226,11 @@ for k = 1:Norient
     eigenvalues{k} = temp_eigenvalues;
     spectra(k,:,:) = temp_integrals;
 
-    if save_all_data && ~save_traces_to_disk
-        signals{k} = temp_signal;
-        allsignals(k,:) = temp_allsignals; 
+    if save_all_data
+        signals_sweep{sweep_idx} = zeros(numel(options.det_op), Nt, Nfields, Norient);
+        for k = 1:Norient
+            signals_sweep{sweep_idx}(:,:,:,k) = signals{k};
+        end
     end
 end
 
@@ -270,28 +273,86 @@ ylabel('P_z')
 % save('Data/num_MQ_powder_spectra_D15_5MHz_different_T2dwdadawd.mat', 'magnetic_fields', "powder_spectra", "T2_array")
 
 %% Plot time evolution of signal
-% [experiment, options] = triple(sequence, options);  % build experiment to get experiment.tp
 det_op = 1;
+orientation = 1;
+magnetic_field = 1;
 
-signal = zeros(size(signals{det_op}));
-Nt = size(signals{det_op}, 2);
 time = (0:Nt-1) * experiment.dt;
-trace_idx = 158;
 
-if save_all_data
-    stride = 1;   % downsample
-    t_idx = 1:stride:length(time);
-    trace = squeeze(signals{1}(1, t_idx, trace_idx));
-    time_ds = time(t_idx);
-    
-    fig = figure('NumberTitle','off','Name','Time-Domain Spectrum Pz');
-    hold on
-    plot(time_ds, real(trace))
-    xlabel('Time / ns')
-    ylabel('Polarization')
+stride = 1;   % downsample
+t_idx = 1:stride:length(time);
+trace = signals{magnetic_field, orientation}(det_op, :);
+time_ds = time(t_idx);
 
-    % save('Data/MQ_signal_time_evolution_on_resonance.mat', 'trace', 'time_ds')
-end
+fig = figure('NumberTitle','off','Name','Time-Domain Spectrum Pz');
+hold on
+plot(time_ds, real(trace))
+xlabel('Time / ns')
+ylabel('Polarization')
+
+% save('Data/MQ_signal_timdwdwdwde_evolution_on_resonance.mat', 'trace', 'time_ds')
+
+%% Time-domain signal with magnetic-field slider
+
+det_op = 1;
+orientation = 1;
+sweep_idx = 1;
+
+time = (0:Nt-1) * experiment.dt;
+trace_all = squeeze(signals{orientation}(det_op, :, :)); % Nt × Nfields
+
+fig = figure('NumberTitle','off','Name','Time-Domain Signal');
+ax = axes(fig); hold(ax,'on');
+
+plt = plot(ax, time, real(trace_all(:,1)));
+xlabel(ax,'Time / ns');
+ylabel(ax,'Polarization');
+title(ax, sprintf('B = %.5f T', magnetic_fields(1)));
+
+sld = uicontrol(fig,'Style','slider', ...
+    'Min',1,'Max',numel(magnetic_fields), ...
+    'Value',1, ...
+    'SliderStep',[1/(numel(magnetic_fields)-1), 5/(numel(magnetic_fields)-1)], ...
+    'Units','normalized','Position',[0.15 0.02 0.7 0.04]);
+
+sld.Callback = @(src,~) ...
+    set(plt,'YData',real(trace_all(:,round(src.Value)))) | ...
+    title(ax, sprintf('B = %.5f T', magnetic_fields(round(src.Value))));
+
+%% Time-domain signal with sweep-value slider
+
+det_op = 1;
+orientation = 1;
+field_idx = 1;        % <<< fixed magnetic-field index
+
+time = (0:Nt-1) * experiment.dt;
+
+% initial sweep
+sweep_idx = 1;
+trace_all = squeeze(signals_sweep{sweep_idx}{orientation}(det_op,:,field_idx));
+
+fig = figure('NumberTitle','off','Name','Time-Domain Signal');
+ax = axes(fig); hold(ax,'on');
+
+plt = plot(ax, time, real(trace_all));
+xlabel(ax,'Time / ns');
+ylabel(ax,'Polarization');
+title(ax, sprintf('%s = %.3g', sweep_param, sweep_values(sweep_idx)));
+
+sld = uicontrol(fig,'Style','slider', ...
+    'Min',1,'Max',numel(sweep_values), ...
+    'Value',1, ...
+    'SliderStep',[1/(numel(sweep_values)-1), 1/(numel(sweep_values)-1)], ...
+    'Units','normalized','Position',[0.15 0.02 0.7 0.04]);
+
+sld.Callback = @(src,~) ...
+    set(plt,'YData', ...
+        real(squeeze( ...
+            signals_sweep{round(src.Value)}{orientation}(det_op,:,field_idx)))) | ...
+    title(ax, sprintf('%s = %.3g', ...
+        sweep_param, sweep_values(round(src.Value))));
+
+
 
 %% Plot MQ Spectra for different thetas
 det_op = 1;

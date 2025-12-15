@@ -3,7 +3,7 @@ clear options
 clear sequence
 
 %-- Settings --%
-rot_echo = true;
+rot_echo = 1;
 
 save_all_data = true;
 save_traces_to_disk = false;  % only applies if save_all_data=true
@@ -23,7 +23,7 @@ D_parallel = 0.0155;
 % D_parallel = 0;
 D_perpen = -D_parallel/2;
 
-thetas = deg2rad(linspace(0, 90, 10));
+thetas = deg2rad(linspace(0, 90, 50));
 % thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
 % thetas = deg2rad([45]);
 phis = deg2rad([0]); % Phi has no impact on the spectra
@@ -60,7 +60,7 @@ options.relaxation=1;       % tells SPIDYAN whether to include relaxation (1) or
 options.down_conversion=0;  % downconversion of signal (1) or not (0)
 options.det_op={'ez', 'ex', 'ze'};
 options.labframe = 1;       % lab frame simulation is on
-options.awg.s_rate = 10;   % gives sampling rate of simulation in GHz
+options.awg.s_rate = 20;   % gives sampling rate of simulation in GHz
 
 %
 
@@ -68,17 +68,19 @@ nu_uw = abs(nu_electron);
 % nu_uw = 3000
 
 % Set sequence
-tau_array = [50, 100, 200, 400, 800, 1600, 3200];  % ns
-
-sequence.nu1  = [1.0, 1.0];
-% sequence.nu1  = [0, 0];
-sequence.frq  = [nu_uw, nu_uw];
-sequence.t_rise = [0, 0];               % no chirp
+tau_array = [50, 100, 200, 400, 800];  % ns
 
 if rot_echo
-    sequence.phase = [0, pi];               % phase shift for second part of pulse
+    phase_flip = pi;
+    sequence.phase = [0, phase_flip];               % phase shift for second part of pulse
+    sequence.nu1  = [1.0, 1.0];
+    sequence.nu1  = [0, 0];
+    sequence.frq  = [nu_uw, nu_uw];
+    sequence.t_rise = [0, 0];               % no chirp
 else
-    sequence.phase = [0, 0];               % no phase shift
+    sequence.nu1 = 1.0;
+    sequence.frq = nu_uw;
+    sequence.t_rise = 0;
 end
 
 %-- Generation of relevant matrices --%
@@ -140,7 +142,13 @@ powder_signals = cell(1, length(tau_array));   % or Nt x Ntau matrix if preferre
 for tau_idx = 1:length(tau_array)
     tau = tau_array(tau_idx);
     
-    sequence.tp   = [tau, tau];             % two equal pulse blocks
+    if rot_echo
+        sequence.phase(2) = phase_flip+angle(exp(1j*2*pi*nu_uw*tau)); % account for acuired phase
+        sequence.tp = [tau, tau];             % two equal pulse blocks
+    else
+        sequence.tp = 2*tau;
+    end
+
     sequence.detection = ones(1,length(sequence.tp));
     
     [experiment, options] = triple(sequence, options);  % build experiment to get experiment.tp
@@ -228,7 +236,7 @@ toc;
 
 %% Plot sin(theta) weighted powder timetrace
 
-fig = figure('NumberTitle','off', 'Name', 'Powder Averaged Time traces');
+fig = figure('NumberTitle','off', 'Name', sprintf('Powder Averaged Time traces, rot_echo=%d', rot_echo));
 hold on
 for tau_idx = 1:length(tau_array)
     plot(time_axes{tau_idx}(:), real(powder_signals{tau_idx}(:)));
