@@ -3,7 +3,7 @@ clear options
 clear sequence
 
 %-- Settings --%
-save_all_data = true;
+save_all_data = false;
 save_traces_to_disk = false;  % only applies if save_all_data=true
 save_trace_dir = 'Data/traces/test';
 
@@ -28,19 +28,19 @@ A_iso = 0.0014;
 D_parallel = 0.0155;
 D_perpen = -D_parallel/2;
 
-% thetas = deg2rad(linspace(0, 90, 50));
+thetas = deg2rad(linspace(0, 90, 50));
 % thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
-thetas = deg2rad([45]);
+% thetas = deg2rad([45]);
 phis = deg2rad([0]); % Phi has no impact on the spectra
 
 % Range of B0
 B0 = 0.0822;
 B_start = 0.078;
 B_end = 0.086;
-dB = 0.0001;
+dB = 0.00001;
 magnetic_fields = B_start : dB : B_end;
 % magnetic_fields = linspace(0, 0.16, 200);
-magnetic_fields = [0.79, 0.08177];
+% magnetic_fields = [0.79, 0.08177];
 
 length(magnetic_fields)
 
@@ -79,6 +79,7 @@ sequence.tp=16000.0;                             % vector with event lengths in 
 sequence.frq=nu_uw;                              % frequency of pulse
 sequence.t_rise=0;                               % rise time of chirp pulses
 sequence.detection=ones(1,length(sequence.tp));  % detection always on
+sequence.type={'rectangular'};
 
 %-- Generation of relevant matrices --%
 Sx = sop([1/2 1/2],'xe');
@@ -142,6 +143,9 @@ tic;
 spectra_sweep = zeros(Norient, Nfields, length(sweep_values));
 
 for sweep_idx = 1:length(sweep_values)
+fprintf('\n\nsweep_idx %d\n', sweep_idx)
+disp('====================================================')
+
 
 if strcmp(sweep_param, 'T2')
     T2 = sweep_values(sweep_idx);
@@ -162,6 +166,7 @@ system.T2 = [0, 1e9, T2,  T2;
 
 % parpool('Threads');  % Start ThreadPool, threads share memory
 for k = 1:Norient
+    fprintf('theta_idx %d\n', k)
     T_lab = T_labs{k};
     temp_eigenvalues = zeros(4, Nfields);
     temp_integrals = zeros(numel(options.det_op), Nfields);
@@ -264,13 +269,13 @@ end
 fig = figure('NumberTitle','off','Name','MQ Powder Spectrum');
 hold on
 for sweep_idx = 1:length(sweep_values)
-    plot(magnetic_fields, powder_spectra{sweep_idx}, 'DisplayName', sprintf('T2_{elec} = %.0f ns', sweep_values(sweep_idx)))
+    plot(magnetic_fields, powder_spectra{sweep_idx}, 'DisplayName', sprintf('%s = %.0f MHz', sweep_param, sweep_values(sweep_idx)))
 end
 legend show
 xlabel('B / T')
 ylabel('P_z')
 
-% save('Data/num_MQ_powder_spectra_D15_5MHz_different_T2dwdadawd.mat', 'magnetic_fields', "powder_spectra", "T2_array")
+% save('Data/num_MQ_powder_spectra_D15_5MHz_different_nu1.mat', 'magnetic_fields', "powder_spectra", "sweep_values")
 
 %% Plot time evolution of signal
 det_op = 1;
