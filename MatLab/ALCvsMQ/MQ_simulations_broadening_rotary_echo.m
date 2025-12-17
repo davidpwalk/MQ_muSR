@@ -3,30 +3,34 @@ clear options
 clear sequence
 
 %-- Settings --%
-rot_echo = 1;
-pulse_delay = 1000;  % in ns
-
-save_all_data = true;
-save_traces_to_disk = false;  % only applies if save_all_data=true
-save_trace_dir = 'Data/traces/test';
+rot_echo = 0;
+pulse_delay = 0;  % in ns
 
 if save_traces_to_disk && ~exist("save_trace_dir", 'dir')
     mkdir(save_trace_dir)
 end
+
+% Sweep (default values used, while other value is sweeped)
+nu1_default = 1;
+T2_default = 2000;
+tau_default = 200;
+
+sweep_param = 'T2';
+sweep_values = [50, 200, 2000];
 
 % Zeeman (gamma / GHz/T)
 ge = -28.02495;
 gmu = 0.1355;
 
 % Coupling constants (in GHz) and rotation angles (in degree)
-A_iso = 0.0;
+A_iso = 0.0014;
 D_parallel = 0.0155;
 % D_parallel = 0;
 D_perpen = -D_parallel/2;
 
 thetas = deg2rad(linspace(0, 90, 50));
 % thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
-% thetas = deg2rad([45]);
+% thetas = deg2rad([0]);
 phis = deg2rad([0]); % Phi has no impact on the spectra
 
 magnetic_field = 0.08178;
@@ -51,11 +55,6 @@ system.T1 = [0, 1e9,  1e9,  1e9;
              0,   0,    0,  1e9;
              0,   0,    0,    0];
 
-system.T2 = [0, 1e9, 2000, 2000;
-             0,   0, 2000, 2000;            
-             0,   0,    0,  1e9;
-             0,   0,    0,    0];
-
 % Set options
 options.relaxation=1;       % tells SPIDYAN whether to include relaxation (1) or not (0)
 options.down_conversion=0;  % downconversion of signal (1) or not (0)
@@ -63,26 +62,22 @@ options.det_op={'ez', 'ex', 'ze'};
 options.labframe = 1;       % lab frame simulation is on
 options.awg.s_rate = 20;   % gives sampling rate of simulation in GHz
 
-%
-
 nu_uw = abs(nu_electron);
 % nu_uw = 3000
-
-% Set sequence
-tau_array = [50, 100, 200, 400, 800];  % ns
 
 if rot_echo
     phase_flip = pi;
     sequence.phase = [0 ,0, phase_flip];  % last element will be overwritten in loop
-    sequence.nu1  = [0, 1.0, 1.0];
-    % sequence.nu1  = [0, 0];
+    % sequence.nu1  = [0, 0, 0];
     sequence.frq  = [0, nu_uw, nu_uw];
     sequence.t_rise = [0, 0, 0];               % no chirp
 else
-    sequence.nu1 = 1.0;
-    sequence.frq = nu_uw;
-    sequence.t_rise = 0;
+    sequence.nu1 = [0, nu1];
+    sequence.frq = [0, nu_uw];
+    sequence.t_rise = [0, 0];
+    sequence.phase = [0, 0];
 end
+sequence.type={'rectangular'};
 
 %-- Generation of relevant matrices --%
 Sx = sop([1/2 1/2],'xe');
@@ -134,21 +129,48 @@ spectra = zeros(Norient, numel(options.det_op));
 
 tic;
 
-spectra_taus = zeros(Norient, length(tau_array));
-LF_asymmetries = zeros(Norient, length(tau_array));
-
-powder_signals = cell(1, length(tau_array));   % or Nt x Ntau matrix if preferred
+spectra_taus = zeros(Norient, length(sweep_values));
+LF_asymmetries = zeros(Norient, length(sweep_values));
 
 % parpool('Threads');  % Start ThreadPool, threads share memory
-for tau_idx = 1:length(tau_array)
-    tau = tau_array(tau_idx);
+for sweep_idx = 1:length(sweep_values)
+    % fprintf('\n\nsweep_idx %d\n', sweep_idx)
+    % disp('====================================================')
     
-    if rot_echo
-        sequence.phase(end) = phase_flip+angle(exp(1j*2*pi*nu_uw*tau)); % account for acuired phase
-        sequence.tp = [pulse_delay, tau, tau];  % pulse delay with two same pulse blocks afterwards
-    else
-        sequence.tp = pulse_delay + 2*tau;  % pulse_delay + pulse with length 2*tau
+    if strcmp(sweep_param, 'T2')
+        T2 = sweep_values(sweep_idx);
+        nu1 = nu1_default;
+        tau = tau_default;
+        unit = 'ns';  % unit displayed in plot legend
+    
+    elseif strcmp(sweep_param, 'nu1')
+        nu1 = sweep_values(sweep_idx);
+        T2 = T2_default;
+        tau = tau_default;
+        unit = 'MHz';  % unit displayed in plot legend
+    elseif strcmp(sweep_param, 'tau')
+        tau = sweep_values(sweep_idx);
+        nu1 = nu1_default;
+        T2 = T2_default;
+        unit = 'ns';
     end
+
+    system.T2 = [0, 1e9, T2,  T2;
+                 0,   0, T2,  T2;            
+                 0,   0,  0, 1e9;
+                 0,   0,  0,   0];
+
+    if rot_echo
+        sequence.phase(3) = phase_flip+angle(exp(1j*2*pi*nu_uw*(tau)));  % account for acquired phase
+        sequence.tp = [pulse_delay, tau, tau];  % pulse delay with two same pulse blocks afterwards
+        sequence.nu1  = [0, nu1, nu1];
+    else
+        sequence.tp = [pulse_delay, 2*tau];  % pulse_delay + pulse with length 2*tau
+        sequence.nu1 = [0, nu1];
+    end
+
+    % Testing
+    sequence.nu1 = [0, 1];
 
     sequence.detection = ones(1,length(sequence.tp));
     
@@ -187,31 +209,9 @@ for tau_idx = 1:length(tau_array)
         [temp_state, detected_signal, ~] = homerun(temp_state, temp_system, temp_experiment, temp_options, []);
 
         temp_integrals(:, n) = mean(real(detected_signal.sf), 2);
-        LF_asymmetries(n, tau_idx) = real(detected_signal.sf(1, end));
+        LF_asymmetries(n, sweep_idx) = real(detected_signal.sf(1, end));
 
-        if save_all_data
-            if save_traces_to_disk
-                output_filename = sprintf('trace_k%03d_n%05d.mat', n, n);
-                output_path = fullfile(save_trace_dir, output_filename);
-
-                % sf = detected_signal.sf;        % time-domain signal
-
-                % output.detected_signal = detected_signal.sf;
-                % output.options = options;
-                
-                % Save traces to disk
-                save(output_path, "-struct", 'output', '-v7.3');
-
-                % Clear from worker's RAM
-                % sf = [];
-                detected_signal = [];
-            else
-                signals{n} = detected_signal.sf;
-                % temp_allsignals{n} = detected_signal;
-            end
-        end
-        
-        % spectra(n,:,:) = temp_integrals;
+        signals{n} = detected_signal.sf;
     end
 
     det_op = 1;
@@ -222,7 +222,7 @@ for tau_idx = 1:length(tau_array)
     powder_signal_tau = zeros(Nt, 1);   % column vector
     
     % store time axis for this tau
-    time_axes{tau_idx} = (0:Nt-1).' * experiment.dt;   % Nt x 1
+    time_axes{sweep_idx} = (0:Nt-1).' * experiment.dt;   % Nt x 1
     
     for n = 1:Norient
         % signals{n} is ndet x Nt, take row det_op and force column
@@ -230,7 +230,7 @@ for tau_idx = 1:length(tau_array)
         powder_signal_tau = powder_signal_tau + weights(n) * trace_n;
     end
     
-    powder_signals{tau_idx} = powder_signal_tau;   % Nt x 1
+    powder_signals{sweep_idx} = powder_signal_tau;   % Nt x 1
 end
 
 toc;
@@ -239,13 +239,13 @@ toc;
 
 fig = figure('NumberTitle','off', 'Name', sprintf('Powder Averaged Time traces, delay=%d ns, rot_echo=%d', pulse_delay, rot_echo));
 hold on
-for tau_idx = 1:length(tau_array)
-    plot(time_axes{tau_idx}(:), real(powder_signals{tau_idx}(:)));
+for sweep_idx = 1:length(sweep_values)
+    plot(time_axes{sweep_idx}(:), real(powder_signals{sweep_idx}(:)));
 end
 hold off
 xlabel('time (ns)')         % adjust units as needed
 ylabel('P_z')
-legend(arrayfun(@(t) sprintf('\\tau=%g ns', t), tau_array, 'UniformOutput', false));
+legend(arrayfun(@(t) sprintf('%s=%g %s', sweep_param, t, unit), sweep_values, 'UniformOutput', false));
 
 % tau_idx = 3;
 
