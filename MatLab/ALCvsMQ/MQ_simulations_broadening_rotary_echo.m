@@ -4,19 +4,19 @@ clear sequence
 
 %-- Settings --%
 rot_echo = 0;
-pulse_delay = 0;  % in ns
+pulse_delay = 1000;  % in ns
 
-if save_traces_to_disk && ~exist("save_trace_dir", 'dir')
-    mkdir(save_trace_dir)
-end
+% if save_traces_to_disk && ~exist("save_trace_dir", 'dir')
+%     mkdir(save_trace_dir)
+% end
 
 % Sweep (default values used, while other value is sweeped)
 nu1_default = 1;
 T2_default = 2000;
 tau_default = 200;
 
-sweep_param = 'T2';
-sweep_values = [50, 200, 2000];
+sweep_param = 'tau';
+sweep_values = [200, 400, 800];
 
 % Zeeman (gamma / GHz/T)
 ge = -28.02495;
@@ -72,7 +72,6 @@ if rot_echo
     sequence.frq  = [0, nu_uw, nu_uw];
     sequence.t_rise = [0, 0, 0];               % no chirp
 else
-    sequence.nu1 = [0, nu1];
     sequence.frq = [0, nu_uw];
     sequence.t_rise = [0, 0];
     sequence.phase = [0, 0];
@@ -178,19 +177,19 @@ for sweep_idx = 1:length(sweep_values)
     
     Nt = sum(experiment.tp)/sum(experiment.dt) + 1;
 
-    if save_all_data
-        signals = cell(1, Norient);   % will hold ndet x Nt arrays
-    end
+    % if save_all_data
+    %     signals = cell(1, Norient);   % will hold ndet x Nt arrays
+    % end
 
     parfor n = 1:Norient
         T_lab = T_labs{n};
 
         % temp_integrals = zeros(numel(options.det_op), Nfields);
     
-        if save_all_data
-            temp_signal = zeros(length(options.det_op), Nt, Norient);
-            % temp_allsignals = cell(1);
-        end
+        % if save_all_data
+        %     temp_signal = zeros(length(options.det_op), Nt, Norient);
+        %     % temp_allsignals = cell(1);
+        % end
     
         [temp_experiment, temp_options] = triple(sequence, options);
         [temp_system, temp_state, temp_options] = setup(system, temp_options);

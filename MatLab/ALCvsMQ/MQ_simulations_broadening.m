@@ -17,7 +17,7 @@ T2_default = 2000;
 
 sweep_param = 'nu1';
 % sweep_values = [5, 10, 20, 50, 100, 1000, 2000];
-sweep_values = [1, 2, 10, 50, 100];
+sweep_values = [20, 22, 24, 26, 28, 30];
 
 % Zeeman (gamma / GHz/T)
 ge = -28.02495;
@@ -275,7 +275,7 @@ legend show
 xlabel('B / T')
 ylabel('P_z')
 
-% save('Data/num_MQ_powder_spectra_D15_5MHz_different_nu1.mat', 'magnetic_fields', "powder_spectra", "sweep_values")
+% save('Data/num_MQ_powder_spectra_D15_5MHz_different_nu1_detailed_scan.mat', 'magnetic_fields', "powder_spectra", "sweep_values")
 
 %% Plot time evolution of signal
 det_op = 1;
