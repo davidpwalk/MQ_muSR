@@ -1,0 +1,91 @@
+Global msr file for the runs 1 2
+###############################################################
+FITPARAMETER
+#      No Name        Value     Step        Pos_Error   Boundaries
+
+# Common parameters for all runs 1 2
+
+        1 Alpha    1.04129    0.00023    0.00023        
+
+# Specific parameters for run 1616
+
+        2 Asy_1_01616    1.440    0.012    0.012        
+        3 Lam_1_01616    0.0609    0.0034    0.0034        
+        4 Phi_1_01616    273.639    0.030    0.030        
+        5 Frq_1_01616    -0.000002    0.000034    0.000034        
+        6 Asy_2_01616    0.083    0.022    0.022        
+        7 Lam_2_01616    7.8    1.3    1.3        
+        8 Phi_2_01616    285.3    4.1    4.1        
+        9 Frq_2_01616    -0.139    0.041    0.041        
+
+# Specific parameters for run 1617
+
+       10 Asy_1_01617    0.08313    0.00025    0.00025        
+       11 Lam_1_01617    0.1170    0.0015    0.0015        
+       12 Phi_1_01617    7.53    0.19    0.19        
+       13 Frq_1_01617    0.30759    0.00024    0.00024        
+       14 Asy_2_01617    0.0100    0.0022    0.0022        
+       15 Lam_2_01617    11.7    2.9    2.9        
+       16 Phi_2_01617    -19.7    13.1    13.1        
+       17 Frq_2_01617    31.00    0.51    0.51        
+
+###############################################################
+THEORY
+asymmetry map1 
+simplExpo map2 
+TFieldCos map3 map4 
++
+asymmetry map5 
+simplExpo map6 
+TFieldCos map7 map8 
+
+###############################################################
+# FUNCTIONS
+
+###############################################################
+GLOBAL
+fittype         2         (asymmetry fit)
+fit             0.02    9.5    
+packing         100
+
+###############################################################
+
+# RUN blocks for run 1616
+
+RUN /afs/psi.ch/project/bulkmusr/data/hifi/d2025/tdc/root/deltat_tdc_hifi_2025_1616 PIE3 PSI MUSR-ROOT   (name beamline institute data-file-format)
+alpha           1
+map             2    3    4    5    6    7    8    9    0    0
+forward         3       4       5       
+backward        7       8       9       
+
+# RUN blocks for run 1617
+
+RUN /afs/psi.ch/project/bulkmusr/data/hifi/d2025/tdc/root/deltat_tdc_hifi_2025_1617 PIE3 PSI MUSR-ROOT   (name beamline institute data-file-format)
+alpha           1
+map            10   11   12   13   14   15   16   17    0    0
+forward         3       4       5       
+backward        7       8       9       
+
+###############################################################
+COMMANDS
+MIGRAD
+HESSE
+SAVE
+
+###############################################################
+FOURIER
+units            MHz    # units either 'Gauss', 'Tesla', 'MHz', or 'Mc/s'
+fourier_power    12
+apodization      STRONG  # NONE, WEAK, MEDIUM, STRONG
+plot             POWER   # REAL, IMAG, REAL_AND_IMAG, POWER, PHASE, PHASE_OPT_REAL
+phase            8.5
+
+###############################################################
+PLOT 2   (asymmetry plot)
+runs 1 2
+
+use_fit_ranges
+
+###############################################################
+STATISTIC --- 2026-01-23 15:19:34
+*** FIT DID NOT CONVERGE ***

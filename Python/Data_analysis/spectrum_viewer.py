@@ -46,7 +46,7 @@ plt.gcf().set_size_inches(4.8, 3.2)
 plt.yticks([0.215, 0.22, 0.225, 0.23])
 
 lt = np.load('../../Data/TS_15K_spectrum.npz')
-ht = np.load('../../Data/GPS/TS_260K_spectrum.npz')
+ht = np.load('../../Data/TS_260K_spectrum.npz')
 
 plt.show()
 plt.figure(11)
@@ -93,7 +93,7 @@ plt.gcf().set_size_inches(4.8, 3.2)
 
 
 lt = np.load('../../Data/STO_17K_spectrum.npz')
-ht = np.load('../../Data/GPS/TS_260K_spectrum.npz')
+ht = np.load('../../Data/TS_260K_spectrum.npz')
 
 plt.show()
 plt.figure(12)
@@ -191,7 +191,7 @@ plt.gcf().set_size_inches(ssi*0.6)
 
 #%% S-1 experiments, 2025, all at 260 K
 
-TS1 = np.load('../../Data/GPS/TS_260K_spectrum.npz')
+TS1 = np.load('../../Data/TS_260K_spectrum.npz')
 S1_setup = np.load('../../Data/S_260K_1stspec_nodegrader.npz')
 S1 = np.load('../../Data/S_260K_spec.npz')
 

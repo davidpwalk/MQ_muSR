@@ -283,7 +283,7 @@ def get_asy(run = 891, year = 2020, alpha = 2.0, binning = 1, start_t = 0.0, end
 def get_counts(run = 891, year = 2020, alpha = 2.0, binning = 1, start_t = 0.0, end_t = 100.0e3, single_bin = False, instrument = 'GPS'):
     
     #%% part about getting the file from web
-    storagefold = r'../../Data/GPS'
+    storagefold = r'../Data/GPS'
     storagefold = pathlib.Path(storagefold)
     
     # check the local storage folder
