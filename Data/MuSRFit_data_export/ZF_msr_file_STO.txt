@@ -1,0 +1,91 @@
+SrTiO3, pellet, 70 K
+###############################################################
+FITPARAMETER
+#      No Name        Value     Step        Pos_Error   Boundaries
+
+# Common parameters for all runs 1 2
+
+        1 Alpha       1.028     0           none        
+
+# Specific parameters for run 1610
+
+        2 Asy_1_01610 0.1272    0.0051      none        
+        3 Lam_1_01610 0.240     0.048       none        
+        4 Phi_1_01610 -93.3     1.0         none        
+        5 Frq_1_01610 0.278     0.011       none        
+        6 Asy_2_01610 0.2094    0.0031      none        
+        7 Lam_2_01610 1.703     0.068       none        
+        8 Phi_2_01610 -30.9     1.4         none        
+        9 Frq_2_01610 0.007     0.018       none        
+
+# Specific parameters for run 1611
+
+       10 Asy_1_01611 0.1899    0.0015      none        
+       11 Lam_1_01611 0.198     0.027       none        
+       12 Phi_1_01611 -44.13    0.46        none        
+       13 Frq_1_01611 -0.0000   0.0044      none        
+       14 Asy_2_01611 4.67      0.85        none        
+       15 Lam_2_01611 36.4      3.5         none        
+       16 Phi_2_01611 88.65     0.22        none        
+       17 Frq_2_01611 0.0420    0.0078      none        
+
+###############################################################
+THEORY
+asymmetry   map1
+simplExpo   map2          (rate)
+TFieldCos   map3  map4       (phase frequency)
++
+asymmetry   map5
+simplExpo   map6          (rate)
+TFieldCos   map7  map8       (phase frequency)
+
+###############################################################
+# FUNCTIONS
+
+###############################################################
+GLOBAL
+fittype         2         (asymmetry fit)
+fit             0.03    0.5    
+packing         150
+
+###############################################################
+
+# RUN blocks for run 1610
+
+RUN /afs/psi.ch/project/bulkmusr/data/hifi/d2025/tdc/root/deltat_tdc_hifi_2025_1610 PIE3 PSI MUSR-ROOT   (name beamline institute data-file-format)
+alpha           1
+map             2    3    4    5    6    7    8    9    0    0
+forward         3-5 
+backward        7-9 
+
+# RUN blocks for run 1611
+
+RUN /afs/psi.ch/project/bulkmusr/data/hifi/d2025/tdc/root/deltat_tdc_hifi_2025_1611 PIE3 PSI MUSR-ROOT   (name beamline institute data-file-format)
+alpha           1
+map            10   11   12   13   14   15   16   17    0    0
+forward         3-5 
+backward        7-9 
+
+###############################################################
+COMMANDS
+MIGRAD
+HESSE
+SAVE
+
+###############################################################
+FOURIER
+units            MHz    # units either 'Gauss', 'Tesla', 'MHz', or 'Mc/s'
+fourier_power    12
+apodization      STRONG  # NONE, WEAK, MEDIUM, STRONG
+plot             POWER   # REAL, IMAG, REAL_AND_IMAG, POWER, PHASE, PHASE_OPT_REAL
+phase            8.5
+
+###############################################################
+PLOT 2   (asymmetry plot)
+runs        1   2
+
+use_fit_ranges
+
+###############################################################
+STATISTIC --- 2026-01-26 13:54:11
+  chisq = 255.6, NDF = 242, chisq/NDF = 1.056381
