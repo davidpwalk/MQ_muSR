@@ -10,17 +10,17 @@ ge = -28.02495;
 gmu = 0.1355;
 
 % Coupling constants (in GHz) and rotation angles (in degree)
-A_iso = 0.5148;
-D_parallel = 0.002;
+A_iso = 0.0014;
+D_parallel = 0.0155;
 D_perpen = -D_parallel/2;
 
 % thetas = deg2rad(linspace(0, 90, 200));
-% thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
-thetas = deg2rad([45]);
+thetas = deg2rad([1, 5, 20, 45, 70, 85, 89]);
+% thetas = deg2rad([45]);
 phis = deg2rad([0]); % Phi has no impact on the spectra
 
 % Range of B0
-magnetic_fields = linspace(0, 2.5, 1000);
+magnetic_fields = linspace(0, 0.4, 50);
 % magnetic_fields = [1.82, 1.8922];
 
 % the system
