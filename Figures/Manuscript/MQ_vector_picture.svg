@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="62.5mm"
+   height="70mm"
+   viewBox="0 0 62.5 70"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   sodipodi:docname="MQ_vector_picture.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="false"
+     inkscape:deskcolor="#3d3d3d"
+     inkscape:document-units="mm"
+     showborder="true"
+     borderlayer="true"
+     inkscape:antialias-rendering="true"
+     inkscape:zoom="2.8284271"
+     inkscape:cx="77.781746"
+     inkscape:cy="132.40574"
+     inkscape:window-width="1920"
+     inkscape:window-height="1009"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     inkscape:export-bgcolor="#ffffffff" />
+  <defs
+     id="defs1">
+    <marker
+       style="overflow:visible"
+       id="marker15"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path15" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker14"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path14" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker13"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path13" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="ConcaveTriangle"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="0.44999999"
+       markerHeight="0.44999999"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid"
+       markerUnits="userSpaceOnUse">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path7" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="ConcaveTriangle-7"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="0.44999999"
+       markerHeight="0.44999999"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid"
+       markerUnits="userSpaceOnUse">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path7-5" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="ConcaveTriangle-1"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="0.44999999"
+       markerHeight="0.44999999"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid"
+       markerUnits="userSpaceOnUse">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path7-8" />
+    </marker>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       style="fill:none;fill-opacity:1;stroke:#333333;stroke-width:0.255;stroke-dasharray:none;stroke-dashoffset:2.40945;stroke-opacity:1;marker-start:url(#marker13)"
+       id="path11-2"
+       sodipodi:type="arc"
+       sodipodi:cx="-73.413162"
+       sodipodi:cy="-16.391848"
+       sodipodi:rx="19.103699"
+       sodipodi:ry="19.103699"
+       sodipodi:start="0.35056296"
+       sodipodi:end="0.89695184"
+       sodipodi:arc-type="arc"
+       d="m -55.47136,-9.8311296 a 19.103699,19.103699 0 0 1 -6.021194,8.3674568"
+       transform="rotate(-126.9499)"
+       sodipodi:open="true" />
+    <path
+       style="fill:#000000;stroke-width:0.264583"
+       d="m 11.151896,28.208503 h 77.35994 z"
+       id="path1" />
+    <path
+       style="fill:#333333;fill-opacity:1;stroke:#353535;stroke-width:0.347989;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ConcaveTriangle-7)"
+       d="M 31.029814,60.74902 V 8.6125724"
+       id="path3-6" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#333333;stroke-width:0.264583"
+       x="29.331375"
+       y="4.2782784"
+       id="text1"><tspan
+         sodipodi:role="line"
+         id="tspan1"
+         style="font-style:oblique;font-variant:normal;font-weight:500;font-stretch:normal;font-size:4.93889px;font-family:'CMU Sans Serif';-inkscape-font-specification:'CMU Sans Serif Medium Oblique';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#333333;stroke-width:0.264583"
+         x="29.331375"
+         y="4.2782784">I<tspan
+   style="font-size:65%;baseline-shift:sub"
+   id="tspan4">z</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#006815;fill-opacity:1;stroke-width:0.264583"
+       x="24.203436"
+       y="25.938255"
+       id="text1-6-3"><tspan
+         sodipodi:role="line"
+         id="tspan1-4-5"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#006815;fill-opacity:1;stroke-width:0.264583"
+         x="24.203436"
+         y="25.938255">𝜔<tspan
+   style="font-style:oblique;font-variant:normal;font-weight:500;font-stretch:normal;font-size:65%;font-family:'CMU Sans Serif';-inkscape-font-specification:'CMU Sans Serif Medium Oblique';baseline-shift:sub"
+   id="tspan2">I</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#000000;fill-opacity:1;stroke-width:0.264583"
+       x="51.087383"
+       y="12.202952"
+       id="text1-6-3-8"><tspan
+         sodipodi:role="line"
+         id="tspan1-4-5-5"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke-width:0.264583"
+         x="51.087383"
+         y="12.202952">𝜔<tspan
+   style="font-style:oblique;font-variant:normal;font-weight:500;font-stretch:normal;font-size:65%;font-family:'CMU Sans Serif';-inkscape-font-specification:'CMU Sans Serif Medium Oblique';baseline-shift:sub;fill:#000000"
+   id="tspan2-7">𝛼</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#333333;fill-opacity:1;stroke-width:0.264583"
+       x="34.981945"
+       y="35.43903"
+       id="text1-6-3-8-4"><tspan
+         sodipodi:role="line"
+         id="tspan1-4-5-5-8"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#333333;fill-opacity:1;stroke-width:0.264583"
+         x="34.981945"
+         y="35.43903">𝜂<tspan
+   style="font-style:oblique;font-variant:normal;font-weight:500;font-stretch:normal;font-size:65%;font-family:'CMU Sans Serif';-inkscape-font-specification:'CMU Sans Serif Medium Oblique';baseline-shift:sub;fill:#333333"
+   id="tspan2-7-6">𝛼</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#000000;fill-opacity:1;stroke-width:0.264583"
+       x="4.7617693"
+       y="31.838272"
+       id="text1-6-3-8-2"><tspan
+         sodipodi:role="line"
+         id="tspan1-4-5-5-7"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke-width:0.264583"
+         x="4.7617693"
+         y="31.838272">𝜔<tspan
+   style="font-style:oblique;font-variant:normal;font-weight:500;font-stretch:normal;font-size:65%;font-family:'CMU Sans Serif';-inkscape-font-specification:'CMU Sans Serif Medium Oblique';baseline-shift:sub;fill:#000000"
+   id="tspan2-7-9">𝛽</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#333333;fill-opacity:1;stroke-width:0.264583"
+       x="17.720703"
+       y="37.202305"
+       id="text1-6-3-8-2-4"><tspan
+         sodipodi:role="line"
+         id="tspan1-4-5-5-7-4"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#333333;fill-opacity:1;stroke-width:0.264583"
+         x="17.720703"
+         y="37.202305">𝜂<tspan
+   style="font-style:oblique;font-variant:normal;font-weight:500;font-stretch:normal;font-size:65%;font-family:'CMU Sans Serif';-inkscape-font-specification:'CMU Sans Serif Medium Oblique';baseline-shift:sub;fill:#333333"
+   id="tspan2-7-9-6">𝛽</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#333333;fill-opacity:1;stroke-width:0.264583"
+       x="23.869415"
+       y="47.903442"
+       id="text1-6-3-8-2-4-8"><tspan
+         sodipodi:role="line"
+         id="tspan1-4-5-5-7-4-4"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#333333;fill-opacity:1;stroke-width:0.264583"
+         x="23.869415"
+         y="47.903442">2𝜂<tspan
+   style="font-style:oblique;font-variant:normal;font-weight:500;font-stretch:normal;font-size:65%;font-family:'CMU Sans Serif';-inkscape-font-specification:'CMU Sans Serif Medium Oblique';baseline-shift:sub;fill:#333333"
+   id="tspan2-7-9-6-9" /></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#3e0063;fill-opacity:1;stroke-width:0.264583"
+       x="35.542133"
+       y="22.371161"
+       id="text1-6-3-8-9"><tspan
+         sodipodi:role="line"
+         id="tspan1-4-5-9-2"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#3e0063;fill-opacity:1;stroke-width:0.264583"
+         x="35.542133"
+         y="22.371161" /></text>
+    <text
+       xml:space="preserve"
+       style="font-style:oblique;font-variant:normal;font-weight:500;font-stretch:normal;font-size:4.93889px;font-family:'CMU Sans Serif';-inkscape-font-specification:'CMU Sans Serif Medium Oblique';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#5f4690;fill-opacity:1;stroke-width:0.264583"
+       x="34.097549"
+       y="25.085283"
+       id="text1-6-3-8-9-5"><tspan
+         sodipodi:role="line"
+         id="tspan1-4-5-9-2-9"
+         style="font-style:oblique;font-variant:normal;font-weight:500;font-stretch:normal;font-size:4.93889px;font-family:'CMU Sans Serif';-inkscape-font-specification:'CMU Sans Serif Medium Oblique';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#5f4690;fill-opacity:1;stroke-width:0.264583"
+         x="34.097549"
+         y="25.085283">A</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:oblique;font-variant:normal;font-weight:500;font-stretch:normal;font-size:4.93889px;font-family:'CMU Sans Serif';-inkscape-font-specification:'CMU Sans Serif Medium Oblique';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#1d6996;fill-opacity:1;stroke:none;stroke-width:0.265;stroke-dasharray:none;stroke-opacity:1"
+       x="29.1035"
+       y="68.848679"
+       id="text1-6-3-8-9-5-8"><tspan
+         sodipodi:role="line"
+         id="tspan1-4-5-9-2-9-2"
+         style="font-style:oblique;font-variant:normal;font-weight:500;font-stretch:normal;font-size:4.93889px;font-family:'CMU Sans Serif';-inkscape-font-specification:'CMU Sans Serif Medium Oblique';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#1d6996;fill-opacity:1;stroke:none;stroke-width:0.265;stroke-dasharray:none;stroke-opacity:1"
+         x="29.1035"
+         y="68.848679">B</tspan></text>
+    <path
+       style="fill:none;fill-opacity:1;stroke:#333333;stroke-width:0.255;stroke-dasharray:none;stroke-dashoffset:2.40945;stroke-opacity:1;marker-start:url(#marker14);marker-end:url(#marker15)"
+       id="path11"
+       sodipodi:type="arc"
+       sodipodi:cx="-63.435768"
+       sodipodi:cy="-8.8874044"
+       sodipodi:rx="19.103699"
+       sodipodi:ry="19.103699"
+       sodipodi:start="6.2433299"
+       sodipodi:end="1.0459226"
+       sodipodi:arc-type="arc"
+       d="m -44.34724,-9.6485886 a 19.103699,19.103699 0 0 1 -9.515593,17.293281"
+       transform="rotate(-126.9499)"
+       sodipodi:open="true" />
+    <path
+       style="fill:#000000;stroke:#1d6996;stroke-width:0.55;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#ConcaveTriangle);marker-end:url(#ConcaveTriangle)"
+       d="m 13.588944,64.161839 h 34.93585"
+       id="path2" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#333333;stroke-width:0.255;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.51, 0.6375;stroke-dashoffset:0.918;stroke-opacity:1;paint-order:normal"
+       d="m 31.056966,13.343311 h 20.225425 v 50.81759"
+       id="path5" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#333333;stroke-width:0.255;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.51, 0.6375;stroke-dashoffset:0.6375;stroke-opacity:1;paint-order:normal"
+       d="M 33.261647,33.627584 H 10.831273 v 30.535149"
+       id="path6" />
+    <path
+       style="fill:#000000;stroke:#333333;stroke-width:0.255;stroke-dasharray:0.51, 0.6375;stroke-dashoffset:0.918;stroke-opacity:1"
+       d="M 31.029813,23.449365 H 33.26"
+       id="path10" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.357368;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:2.40756;stroke-opacity:1;marker-end:url(#ConcaveTriangle);paint-order:normal"
+       d="M 30.878735,60.542848 12.449694,35.81874"
+       id="path9" />
+    <path
+       style="mix-blend-mode:normal;fill:#3366ff;fill-opacity:1;stroke:#5f4690;stroke-width:0.55;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#ConcaveTriangle-1);marker-end:url(#ConcaveTriangle-1)"
+       d="M 33.26,30.719482 V 16.179247"
+       id="path2-0" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.432563;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0.637;stroke-opacity:1;marker-end:url(#ConcaveTriangle);paint-order:normal"
+       d="M 31.240809,60.56673 50.248754,15.873436"
+       id="path8" />
+    <path
+       style="fill:#333333;fill-opacity:1;stroke:#353535;stroke-width:0.356066;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ConcaveTriangle)"
+       d="M 1.4444013,60.634484 H 58.37392"
+       id="path3" />
+    <path
+       style="fill:#0f8754;fill-opacity:1;stroke:#0f8754;stroke-width:0.55;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#ConcaveTriangle)"
+       d="M 31.029814,26.284364 V 60.455439"
+       id="path4" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93889px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#333333;stroke-width:0.264583"
+       x="56.534626"
+       y="66.147484"
+       id="text1-1"><tspan
+         sodipodi:role="line"
+         id="tspan1-42"
+         style="font-style:oblique;font-variant:normal;font-weight:500;font-stretch:normal;font-size:4.93889px;font-family:'CMU Sans Serif';-inkscape-font-specification:'CMU Sans Serif Medium Oblique';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#333333;stroke-width:0.264583"
+         x="56.534626"
+         y="66.147484">I<tspan
+   style="font-size:65%;baseline-shift:sub"
+   id="tspan4-3">x</tspan></tspan></text>
+  </g>
+</svg>
