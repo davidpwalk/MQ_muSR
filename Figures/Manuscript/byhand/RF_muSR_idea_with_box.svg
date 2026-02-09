@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="123mm"
+   height="43mm"
+   viewBox="0 0 123 43"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.3 (0d15f75042, 2025-12-25)"
+   sodipodi:docname="RF_muSR_idea_with_box.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="2.7224467"
+     inkscape:cx="266.30457"
+     inkscape:cy="53.628231"
+     inkscape:window-width="1920"
+     inkscape:window-height="975"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1">
+    <marker
+       style="overflow:visible"
+       id="ConcaveTriangle"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path7" />
+    </marker>
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="116.08298 : 0 : 0"
+       inkscape:vp_y="-1.8369707e-13 : 999.99993 : 0"
+       inkscape:vp_z="-95.089574 : -66.582428 : 0"
+       inkscape:persp3d-origin="100.5557 : -36.222003 : 1"
+       id="perspective1" />
+    <marker
+       style="overflow:visible"
+       id="ConcaveTriangle-0"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path7-6" />
+    </marker>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.175px;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans';text-align:center;writing-mode:lr-tb;direction:ltr;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       x="28.268272"
+       y="21.903973"
+       id="text10"><tspan
+         sodipodi:role="line"
+         id="tspan10"
+         style="font-size:3.175px;stroke-width:0.2"
+         x="28.268272"
+         y="21.903973">Sample</tspan><tspan
+         sodipodi:role="line"
+         style="font-size:3.175px;stroke-width:0.2"
+         x="28.268272"
+         y="25.872723"
+         id="tspan16">Implantation</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.175px;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans';text-align:center;writing-mode:lr-tb;direction:ltr;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       x="84.104103"
+       y="21.903973"
+       id="text10-3"><tspan
+         sodipodi:role="line"
+         style="font-size:3.175px;stroke-width:0.2"
+         x="84.104103"
+         y="21.903973"
+         id="tspan16-0">Delayed</tspan><tspan
+         sodipodi:role="line"
+         style="font-size:3.175px;stroke-width:0.2"
+         x="84.104103"
+         y="25.872723"
+         id="tspan21">Formation</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.175px;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans';text-align:center;writing-mode:lr-tb;direction:ltr;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       x="54.744164"
+       y="3.9098032"
+       id="text10-1"><tspan
+         sodipodi:role="line"
+         style="font-size:3.175px;stroke-width:0.2"
+         x="54.744164"
+         y="3.9098032"
+         id="tspan16-7">Thermalized</tspan><tspan
+         sodipodi:role="line"
+         style="font-size:3.175px;stroke-width:0.2"
+         x="54.744164"
+         y="7.8785529"
+         id="tspan19">State</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:9.87778px;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans';writing-mode:lr-tb;direction:ltr;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       x="1.9455817"
+       y="30.934185"
+       id="text14"><tspan
+         sodipodi:role="line"
+         id="tspan14"
+         style="font-size:9.87778px;stroke-width:0.2"
+         x="1.9455817"
+         y="30.934185">μ<tspan
+   style="font-size:65%;baseline-shift:super"
+   id="tspan15">+</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:9.87778px;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans';writing-mode:lr-tb;direction:ltr;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       x="47.034023"
+       y="19.54567"
+       id="text14-8"><tspan
+         sodipodi:role="line"
+         id="tspan14-9"
+         style="font-size:9.87778px;stroke-width:0.2"
+         x="47.034023"
+         y="19.54567">μ<tspan
+   style="font-size:65%;baseline-shift:super"
+   id="tspan15-2">+</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:9.87778px;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans';writing-mode:lr-tb;direction:ltr;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       x="47.034023"
+       y="31.787144"
+       id="text14-8-5"><tspan
+         sodipodi:role="line"
+         id="tspan14-9-0"
+         style="font-size:9.87778px;stroke-width:0.2"
+         x="47.034023"
+         y="31.787144">Mu</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:9.87778px;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans';writing-mode:lr-tb;direction:ltr;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       x="46.975975"
+       y="41.756737"
+       id="text14-8-2"><tspan
+         sodipodi:role="line"
+         id="tspan14-9-7"
+         style="font-size:9.87778px;stroke-width:0.2"
+         x="46.975975"
+         y="41.756737">Mu<tspan
+   style="font-size:65%;baseline-shift:super"
+   id="tspan18">−</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.175px;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans';text-align:center;writing-mode:lr-tb;direction:ltr;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       x="110.10685"
+       y="3.9098022"
+       id="text10-1-7"><tspan
+         sodipodi:role="line"
+         style="font-size:3.175px;stroke-width:0.2"
+         x="110.10685"
+         y="3.9098022"
+         id="tspan19-6">Final</tspan><tspan
+         sodipodi:role="line"
+         style="font-size:3.175px;stroke-width:0.2"
+         x="110.10685"
+         y="7.878552"
+         id="tspan20">State</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:9.87778px;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans';writing-mode:lr-tb;direction:ltr;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       x="102.39671"
+       y="19.54567"
+       id="text14-8-7"><tspan
+         sodipodi:role="line"
+         id="tspan14-9-3"
+         style="font-size:9.87778px;stroke-width:0.2"
+         x="102.39671"
+         y="19.54567">μ<tspan
+   style="font-size:65%;baseline-shift:super"
+   id="tspan15-2-6">+</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:9.87778px;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans';writing-mode:lr-tb;direction:ltr;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       x="102.39671"
+       y="31.78714"
+       id="text14-8-5-5"><tspan
+         sodipodi:role="line"
+         id="tspan14-9-0-6"
+         style="font-size:9.87778px;stroke-width:0.2"
+         x="102.39671"
+         y="31.78714">Mu</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:9.87778px;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans';writing-mode:lr-tb;direction:ltr;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       x="102.33865"
+       y="41.756737"
+       id="text14-8-2-3"><tspan
+         sodipodi:role="line"
+         id="tspan14-9-7-9"
+         style="font-size:9.87778px;stroke-width:0.2"
+         x="102.33865"
+         y="41.756737">Mu<tspan
+   style="font-size:65%;baseline-shift:super"
+   id="tspan18-4">−</tspan></tspan></text>
+    <path
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.467916;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#ConcaveTriangle)"
+       d="M 11.664168,28.310165 H 41.794334"
+       id="path16" />
+    <path
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.467916;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#ConcaveTriangle-0)"
+       d="M 67.5,28.310165 H 97.630166"
+       id="path16-9" />
+    <rect
+       style="fill:none;fill-opacity:1;stroke:#2d00e6;stroke-width:0.495694;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect21"
+       width="55.747375"
+       height="42.504307"
+       x="67.004776"
+       y="0.24784717" />
+  </g>
+</svg>
